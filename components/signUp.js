@@ -5,6 +5,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import * as Animatable from 'react-native-animatable';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome'
+import {Utility} from '../utility/utility';
 
 export default function SignUp(props){
 
@@ -42,12 +43,6 @@ export default function SignUp(props){
             setLoading(false);
             return;
         }
-        if(password===''){
-            setError2(true);
-            ToastAndroid.show("Password field can\'t be empty.",ToastAndroid.LONG);
-            setLoading(false);
-            return;
-        }
         if(password.length < 4 || password.length > 14){
             setError2(true);
             ToastAndroid.show("Password must be minimum 4 and maximum 14 characters.",ToastAndroid.LONG);
@@ -61,42 +56,48 @@ export default function SignUp(props){
             return;
         }
         
-        auth()
-        .createUserWithEmailAndPassword(email,password)
-        .then((user) => {
-            
-            user.user.updateProfile({
-                displayName:name,
-                photoURL:"doctor"
+        const utility=new Utility();
+        utility.checkNetwork()
+        .then(()=>{
+            auth()
+            .createUserWithEmailAndPassword(email,password)
+            .then((user) => {
+                
+                user.user.updateProfile({
+                    displayName:"Dr. "+name,
+                    photoURL:"doctor"
+                })
+                .then(user=>{
+                    setLoading(false);
+                    global.doctorAuthData=auth().currentUser;
+                    props.navigation.navigate("emailVerification");
+                })
+                .catch(err=>{
+                    setLoading(false);
+                    console.log(err);
+                })
+                console.log('User account created & signed in!');
+                console.log("User :",user.user.email);
+                //props.navigation.navigate("home",{user:user.user.providerData});
             })
-            .then(user=>{
+            .catch(error => {
                 setLoading(false);
-                props.navigation.navigate("emailVerification");
-            })
-            .catch(err=>{
-                setLoading(false);
-                console.log(err);
-            })
-            console.log('User account created & signed in!');
-            console.log("User :",user.user.email);
-            //props.navigation.navigate("home",{user:user.user.providerData});
+                if (error.code === 'auth/email-already-in-use') {
+                console.log('That email address is already in use!');
+                ToastAndroid.show("That email address is already in use!",ToastAndroid.LONG);
+                }
+
+                if (error.code === 'auth/invalid-email') {
+                console.log('That email address is invalid!');
+                ToastAndroid.show("That email address is invalid!",ToastAndroid.LONG);
+                }
+
+                
+
+                console.log("error",error);
+            });
         })
-        .catch(error => {
-            setLoading(false);
-            if (error.code === 'auth/email-already-in-use') {
-            console.log('That email address is already in use!');
-            ToastAndroid.show("That email address is already in use!",ToastAndroid.LONG);
-            }
-
-            if (error.code === 'auth/invalid-email') {
-            console.log('That email address is invalid!');
-            ToastAndroid.show("That email address is invalid!",ToastAndroid.LONG);
-            }
-
-            
-
-            console.log("error",error);
-        });
+        .catch(err=>console.log(err));
     };
 
     return(
@@ -107,7 +108,7 @@ export default function SignUp(props){
                 <Subheading style={{color:'#000'}}>Welocome to Pocket Doc.</Subheading>
                 <Subheading style={{color:'#000',fontWeight:'bold'}}>Register below to continue.</Subheading>
                     <Animatable.View animation="slideInUp" duration={700} delay={70} useNativeDriver={true}>
-                        <Icon name="user-circle-o" size={50} color="#147efb" style={{alignSelf:'center',marginVertical:10}}  />
+                        {/* <Icon name="user-circle-o" size={50} color="#147efb" style={{alignSelf:'center',marginVertical:10}}  /> */}
                         <Headline style={styles.loginText}>Register</Headline>
                         <TextInput
                             mode="outlined"
@@ -226,6 +227,7 @@ const styles=StyleSheet.create({
         fontWeight:'bold'
     },
     loginText:{
+        marginTop:25,
         color:"#147EFB",
         alignSelf:'center',
         padding:5,
