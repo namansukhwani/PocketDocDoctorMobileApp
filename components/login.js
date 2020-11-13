@@ -65,6 +65,9 @@ function Login(props){
                         }
                     })
                 }
+                else{
+                    setCheckingLogin(false);
+                }
 
             //console.log(auth().currentUser.emailVerified)
         })
