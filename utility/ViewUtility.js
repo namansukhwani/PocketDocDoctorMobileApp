@@ -11,7 +11,7 @@ export const ChatHeader=({backAction,videoCall,title,profilePicUrl})=>{
                 title={
                     <View style={{flexDirection:'row'}}>
                         {profilePicUrl===''?
-                            <Avatar.Text style={{alignSelf:'center'}} theme={{colors:{primary:('rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')')}}} size={34} label={lable} />
+                            <Avatar.Text style={{alignSelf:'center'}} theme={{colors:{primary:'#6a1b9a'}}} size={34} label={lable} />
                             :
                             <Avatar.Image source={{uri:profilePicUrl}} style={{alignSelf:'center'}} theme={{colors:{primary:'#147efb'}}} size={34} />
                         }

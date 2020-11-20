@@ -10,58 +10,8 @@ import { FlatList } from 'react-native-gesture-handler';
 import moment from 'moment';
 import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
-
-// const data=[
-//     {
-//         name:"Nitesh Sukhwani",
-//         lastMess:"Cool!",
-//         time:new Date('11/07/2020'),
-//         profilePic:""
-//     },
-//     {
-//         name:"Joy Singh",
-//         lastMess:"Sure Done:)",
-//         time:new Date('11/02/2020'),
-//         profilePic:"https://dyl80ryjxr1ke.cloudfront.net/external_assets/hero_examples/hair_beach_v1785392215/original.jpeg"
-//     },
-//     {
-//         name:"Suresh Sukhwani",
-//         lastMess:"Everythig is fine whatsup with you",
-//         time:new Date(),
-//         profilePic:""
-//     },
-//     {
-//         name:"Manas Satpute",
-//         lastMess:"Ok bro GREAT!!!",
-//         time:new Date('11/10/2020'),
-//         profilePic:""
-//     },
-//     {
-//         name:"Nitesh Sukhwani",
-//         lastMess:"Cool!",
-//         time:new Date('11/07/2018'),
-//         profilePic:""
-//     },
-//     {
-//         name:"Joy Singh",
-//         lastMess:"Sure Done:)",
-//         time:new Date('11/02/2020'),
-//         profilePic:"https://dyl80ryjxr1ke.cloudfront.net/external_assets/hero_examples/hair_beach_v1785392215/original.jpeg"
-//     },
-//     {
-//         name:"Suresh Sukhwani",
-//         lastMess:"Everythig is fine whatsup with you",
-//         time:new Date(),
-//         profilePic:""
-//     },
-//     {
-//         name:"Manas Satpute",
-//         lastMess:"Ok bro GREAT!!!",
-//         time:new Date('11/10/2019'),
-//         profilePic:""
-//     },
-  
-// ]
+import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Spinner from 'react-native-spinkit';
 
 const todayDate=new Date();
 
@@ -81,9 +31,21 @@ function AllChats(props){
     const [search, setSearch] = useState('');
     // const [unread, setUnread] = useState(0);
     const [data, setData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
      //lifecycle
+
      useEffect(()=>{
+        setFilteredData(
+            data.filter(doc=>{
+                return doc.userName.toLowerCase().includes(search.toLowerCase())
+            })    
+        )
+     },[search,data])
+
+     useEffect(()=>{
+        
         const unsubscribe=firestore().collection("chatRooms")
         .where('doctorId','==',auth().currentUser.uid)
         .orderBy('lastUpdatedDate','desc')
@@ -96,6 +58,8 @@ function AllChats(props){
                 return(documentSnapshot.data());
             })
             setData(threads);
+            if(loading){setLoading(false)}
+            //console.log("Changes happened");
         }) 
 
         return ()=>unsubscribe();
@@ -121,8 +85,8 @@ function AllChats(props){
         else{
             var time=moment(updateDate).format("DD/MM/YYYY");
         }
-        const color=('rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')');
-        
+        //const color=('rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')');
+        const color=index%2===0 ? "#00b8d4":"#3f51b5";
 
         const handelPress=()=>{
             firestore()
@@ -194,14 +158,34 @@ function AllChats(props){
             />
             </View>
             
-            <FlatList
-                data={data}
-                renderItem={ListView}
-                keyExtractor={(item,index)=>index.toString()}
-                showsVerticalScrollIndicator={false}
-                ListHeaderComponent={headerComponent}
-                contentContainerStyle={{padding:15}}
-            />
+            {loading?
+                <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+                    <Spinner 
+                        type="Wave"
+                        color="#147efb"
+                        isVisible={loading}
+                        size={50}
+                    />
+                </View>
+                :
+                (filteredData.length===0 ? 
+                    <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+                        <ComunityIcon name='message-bulleted-off' size={80} color="#147efb"/>
+                        <Subheading style={{}}>No Chats Available.</Subheading>
+                    </View>
+                    :
+                    <FlatList
+                        data={filteredData}
+                        renderItem={ListView}
+                        keyExtractor={(item,index)=>index.toString()}
+                        showsVerticalScrollIndicator={false}
+                        ListHeaderComponent={headerComponent}
+                        contentContainerStyle={{padding:15}}
+                    />
+                )
+            }
+            
+            
 
         </View>
     );

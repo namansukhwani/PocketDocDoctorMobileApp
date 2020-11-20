@@ -41,7 +41,7 @@ function Home(props){
     );
 
     //methods
-    console.log(userData);
+    //console.log(userData);
 
 
     //component

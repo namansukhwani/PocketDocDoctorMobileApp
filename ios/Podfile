@@ -13,6 +13,8 @@ target 'PocketDocDoctor' do
   pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
 
 
+  pod 'react-native-video', :path => '../node_modules/react-native-video'
+
   target 'PocketDocDoctorTests' do
     inherit! :complete
     # Pods for testing
