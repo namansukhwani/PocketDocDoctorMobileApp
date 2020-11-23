@@ -15,6 +15,8 @@ target 'PocketDocDoctor' do
 
   pod 'react-native-video', :path => '../node_modules/react-native-video'
 
+  pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
+
   target 'PocketDocDoctorTests' do
     inherit! :complete
     # Pods for testing

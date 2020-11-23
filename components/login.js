@@ -241,10 +241,11 @@ function Login(props){
                                 setEmail(text);
                             }}
                             placeholder="example@some.com"
-                            style={{backgroundColor:"#fff",marginTop:10}}
+                            style={{backgroundColor:"#fff",marginTop:10,color:'#000'}}
                             theme={{colors:{primary:"#147EFB"}}}
                             left={<TextInput.Icon name="account" color="#147EFB"/>}
                             error={error1}
+                            placeholderTextColor="#b6b6b6"
                         />
                         <TextInput
                             mode="outlined"
