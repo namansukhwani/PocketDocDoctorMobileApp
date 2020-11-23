@@ -61,7 +61,7 @@ function AppointmentsTab(props) {
                     name="AppointmentsCurrent"
                     component={AppointmentsCurrent}
                     options={{
-                        tabBarLabel: ({ focused, color }) => TopTabLable(focused, color, "CURRENT"),
+                        tabBarLabel: ({ focused, color }) => TopTabLable(focused, color, "NEW"),
                     }}
                 />
                 <TopTab.Screen

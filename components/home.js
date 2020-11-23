@@ -10,7 +10,6 @@ import { HomeHeader } from '../utility/ViewUtility';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
 import Fontisto from 'react-native-vector-icons/FontAwesome';
-import { PAUSE } from 'redux-persist';
 
 const dataSchedule = [
     {
