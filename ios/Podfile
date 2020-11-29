@@ -17,6 +17,12 @@ target 'PocketDocDoctor' do
 
   pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
 
+  pod 'RNSound', :path => '../node_modules/react-native-sound'
+
+  pod 'react-native-webrtc', :path => '../node_modules/react-native-webrtc'
+
+  pod 'ReactNativeIncallManager', :path => '../node_modules/react-native-incall-manager'
+
   target 'PocketDocDoctorTests' do
     inherit! :complete
     # Pods for testing
