@@ -8,6 +8,7 @@ import {Utility} from '../utility/utility';
 import {connect} from 'react-redux';
 import {getDoctorDetails} from '../redux/ActionCreators';
 import LoadingScreen from './loadingScreen';
+import {AuthService} from '../Services/videoCalling/AuthService';
 
 //redux
 const mapStateToProps=state =>{
@@ -22,7 +23,8 @@ const mapDispatchToProps=(dispatch) => ({
 
 //component
 function Login(props){
-
+    
+    //states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error1, setError1] = useState(false)
@@ -30,6 +32,8 @@ function Login(props){
     const [loading, setLoading] = useState(false);
     const [showPass, setShowPass] = useState(false);
     const [checkingLogin, setCheckingLogin] = useState(true);
+
+    var firstTime=true;
 
     //lifecycle
     useEffect(()=>{
@@ -48,7 +52,10 @@ function Login(props){
                         .catch(err=>console.log(err))
                         if(user.photoURL==="doctor"){
                             if(user.emailVerified){
-                                checkDoctorData(user.uid,true);
+                                if(firstTime){
+                                    firstTime=false;
+                                    checkDoctorData(user.uid,true);
+                                }
                             }
                             else{
                                 setLoading(false);  
@@ -89,7 +96,11 @@ function Login(props){
                 setPassword('');
             }
             props.navigation.navigate("home");
-        
+            AuthService.login(uid)
+            .then(()=>{console.log();
+                
+            })
+            .catch(err=>{console.log(err);})
         })
         .catch((err)=>{
             if(err.status){
@@ -103,7 +114,11 @@ function Login(props){
                 }
                 
                 props.navigation.navigate("getNewUserData");
-                
+                AuthService.login(uid)
+                .then(()=>{console.log();
+                    
+                })
+                .catch(err=>{console.log(err);})
             }
             setCheckingLogin(false);
             console.log('Error APi: ',err);

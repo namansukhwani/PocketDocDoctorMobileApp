@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StatusBar, BackHandler, ToastAndroid, ScrollView, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { Avatar, Button, Headline, Caption, Paragraph, RadioButton, Subheading, TextInput, Title, Card } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
@@ -72,6 +72,10 @@ const mapDispatchToProps = (dispatch) => ({
 
 function Home(props) {
 
+    //refs
+    const animatedView1 = useRef(0);
+    const animatedView2 = useRef(0);
+
     const todayDate = new Date();
     const userData = auth().currentUser.providerData;
     const [backCount, setBackCount] = useState(0);
@@ -80,6 +84,8 @@ function Home(props) {
 
     useFocusEffect(
         useCallback(() => {
+            animatedView1.current.slideInRight(500);
+            animatedView2.current.slideInUp(500);
             const backhandler = BackHandler.addEventListener("hardwareBackPress", () => {
                 backCount === 0 ? ToastAndroid.show('Press back to exit', ToastAndroid.SHORT) : BackHandler.exitApp();
                 setBackCount(1);
@@ -117,14 +123,14 @@ function Home(props) {
         }
 
         return (
-            <Animatable.View animation="slideInUp" style={{ marginBottom: 10 }} duration={500} delay={100} useNativeDriver={true}>
+            <Animatable.View animation="slideInUp" style={{ marginBottom: 10 }} duration={500} delay={50} useNativeDriver={true}>
                 <Card style={styles.card} onPress={() => { }}>
                     <Card.Content style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
                         <View style={{ flexDirection: "row" }}>
                             <Fontisto name="user" size={30} style={{ margin: 5, marginRight: 10, alignSelf: "center" }} color="#147efb" />
                             <Title style={{ paddingVertical: 0, alignSelf: "center", marginVertical: 0, flex: 1 }}>{item.name}</Title>
                         </View>
-                        <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{ item.gender}</Caption>
+                        <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{item.gender}</Caption>
                         <Paragraph numberOfLines={2} style={{ width: '80%', marginVertical: 0, padding: 0 }}><Paragraph style={{ fontWeight: 'bold' }}>issue:</Paragraph>{item.issue}</Paragraph>
                         {/* <View style={{ width: '60%' }}>
                             <Paragraph numberOfLines={1} style={{ overflow: "hidden", }}>adfasdf</Paragraph>
@@ -149,10 +155,10 @@ function Home(props) {
 
     const TodayView = ({ item, index }) => {
         return (
-            <Animatable.View animation="slideInRight" style={{}} duration={500} useNativeDriver={true}>
+            <Animatable.View animation="slideInRight" style={{}} duration={500} delay={50} useNativeDriver={true}>
                 <TouchableOpacity style={styles.appointmentsToday}>
                     <Title numberOfLines={1}>{item.name}</Title>
-                    <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{ item.gender}</Caption>
+                    <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{item.gender}</Caption>
                     <Paragraph numberOfLines={1} style={{ overflow: "hidden", width: 210 }}><Paragraph style={{ fontWeight: "bold" }}>issue: </Paragraph>{item.issue}</Paragraph>
                     <Paragraph style={{ fontWeight: "bold" }}>Mode:</Paragraph>
                     <Subheading style={{ textTransform: 'uppercase', paddingHorizontal: 20, paddingVertical: 5, fontWeight: 'bold', borderRadius: 25, backgroundColor: '#fff', elevation: 3, alignSelf: 'flex-start' }}>{item.mode}</Subheading>
@@ -171,25 +177,28 @@ function Home(props) {
             <ScrollView contentContainerStyle={{ paddingBottom: '0%' }} nestedScrollEnabled={true}>
                 <Animatable.View animation="slideInUp" style={{}} duration={500} delay={50} useNativeDriver={true}>
                     <Subheading style={{ fontWeight: 'bold', paddingTop: 15, paddingHorizontal: 15 }}>Schedule Today</Subheading>
-                    <FlatList
-                        data={dataSchedule}
-                        renderItem={TodayView}
-                        keyExtractor={(item, index) => index.toString()}
-                        horizontal={true}
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 15 }}
-                        nestedScrollEnabled={true}
-                    />
+                    <Animatable.View ref={ref=>animatedView1.current=ref}  useNativeDriver={true}>
+                        <FlatList
+                            data={dataSchedule}
+                            renderItem={TodayView}
+                            keyExtractor={(item, index) => index.toString()}
+                            horizontal={true}
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={{ paddingHorizontal: 15 }}
+                            nestedScrollEnabled={true}
+                        />
+                    </Animatable.View>
                     <Subheading style={{ fontWeight: 'bold', paddingHorizontal: 15 }}>New Appointments</Subheading>
-
-                    <FlatList
-                        data={data}
-                        renderItem={NewView}
-                        keyExtractor={(item, index) => index.toString()}
-                        contentContainerStyle={{ paddingHorizontal: 15 }}
-                        showsVerticalScrollIndicator={false}
-                        nestedScrollEnabled={true}
-                    />
+                    <Animatable.View ref={ref=>animatedView2.current=ref} useNativeDriver={true}>
+                        <FlatList
+                            data={data}
+                            renderItem={NewView}
+                            keyExtractor={(item, index) => index.toString()}
+                            contentContainerStyle={{ paddingHorizontal: 15 }}
+                            showsVerticalScrollIndicator={false}
+                            nestedScrollEnabled={true}
+                        />
+                    </Animatable.View>
                 </Animatable.View>
             </ScrollView>
         </View>

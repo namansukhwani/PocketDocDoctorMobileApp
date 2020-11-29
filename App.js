@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/es/integration/react';
 import { ConfigureStore } from './redux/Store';
 import LoadingScreen from './components/loadingScreen';
+import {AuthService} from './Services/videoCalling/AuthService';
 
 const { store, persistor } = ConfigureStore();
 
@@ -17,6 +18,9 @@ export default class App extends React.Component {
     super(props);
     global.url = "https://pdoc-api.herokuapp.com/";
     global.doctorAuthData = {};
+    
+    //services
+    AuthService.init();
   }
 
   componentDidMount() {

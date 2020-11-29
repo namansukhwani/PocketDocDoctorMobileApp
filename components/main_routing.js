@@ -23,6 +23,7 @@ import Schedule from './Schedule';
 import { HeaderTitle } from '../utility/ViewUtility';
 import AppointmentsCurrent from './AppointmentsCurrent';
 import AppointmentsPrevious from './AppointmentsPrevious';
+import VideoCall from './VideoCall';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -37,8 +38,8 @@ function TopTabLable(focused, color, title) {
 }
 
 function AppointmentsTab(props) {
-    
-    const initialRouteName="AppointmentsCurrent";
+
+    const initialRouteName = "AppointmentsCurrent";
 
     return (
         <>
@@ -86,7 +87,7 @@ function BottomDrawer(props) {
 
             }}
             screenOptions={{
-                unmountOnBlur: true
+                unmountOnBlur: false
             }}
             initialRouteName="userHome"
         >
@@ -265,6 +266,13 @@ export default function Main() {
                     component={Chat}
                 />
 
+                <Stack.Screen
+                    name="VideoCall"
+                    options={({ route, navigation }) => ({
+                        headerShown: false
+                    })}
+                    component={VideoCall}
+                />
             </Stack.Navigator>
         </NavigationContainer>
     )

@@ -5,7 +5,7 @@ import InCallManager from 'react-native-incall-manager';
 import Sound from 'react-native-sound';
 
 class Call {
-  static MEDIA_OPTIONS = { audio: true, video: { facingMode: 'user',width: 1280, height: 720 } };
+  static MEDIA_OPTIONS = {video: { width: 1280, height: 720 }, audio: true};
 
   _session = null;
   mediaDevices = [];
@@ -37,6 +37,7 @@ class Call {
 
   setMediaDevices() {
     return ConnectyCube.videochat.getMediaDevices().then(mediaDevices => {
+      //console.log(mediaDevices);
       this.mediaDevices = mediaDevices;
     });
   }
@@ -47,14 +48,14 @@ class Call {
     this.setMediaDevices();
 
     return this._session
-      .getUserMedia(CallService.MEDIA_OPTIONS)
+      .getUserMedia(Call.MEDIA_OPTIONS)
       .then(stream => {
         this._session.accept({});
         return stream;
       });
   };
 
-  startCall = ids => {
+  startCall = (ids,extraData) => {
     const options = {};
     const type = ConnectyCube.videochat.CallType.VIDEO; // AUDIO is also possible
 
@@ -62,12 +63,15 @@ class Call {
     this.setMediaDevices();
     this.playSound('outgoing');
 
-    return this._session
-      .getUserMedia(CallService.MEDIA_OPTIONS)
+    return new Promise((resolve,reject)=>{ 
+      this._session
+      .getUserMedia(Call.MEDIA_OPTIONS)
       .then(stream => {
-        this._session.call({});
-        return stream;
-      });
+        this._session.call(extraData,err=>{reject(err),this.stopSounds();});
+        resolve(stream);
+      })
+      .catch((err)=>{reject(err);this.stopSounds();});
+    })
   };
 
   stopCall = () => {

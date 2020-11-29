@@ -20,7 +20,7 @@ export const ChatHeader=({backAction,videoCall,title,profilePicUrl})=>{
                 } 
                 titleStyle={{alignSelf:"center"}}
             />
-            <Appbar.Action icon="video-account" size={35} color="#147efb" onPress={()=>videoCall} />
+            <Appbar.Action icon="video-account" size={35} color="#147efb" onPress={() => videoCall()} />
         </Appbar.Header>
     )
 }
