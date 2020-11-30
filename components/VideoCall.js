@@ -60,24 +60,6 @@ function VideoCall(props) {
         }
     }, [])
 
-    // useFocusEffect(
-
-    //     useCallback(() => {
-    //         var backTimer;
-    //         const backhandler = BackHandler.addEventListener("hardwareBackPress", () => {
-    //             backCount === 0 ? ToastAndroid.show('Press back to End Call', ToastAndroid.SHORT) : endCall();
-    //             setBackCount(1);
-    //             backTimer = setTimeout(() => { setBackCount(0) }, 3000)
-    //             return true;
-    //         })
-
-    //         return () => {
-    //             backhandler.remove();
-    //             clearTimeout(backTimer)
-    //         }
-    //     }, [])
-    // );
-
     //method
 
     const checkCallType=()=>{
