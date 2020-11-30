@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, StatusBar, Alert, TouchableOpacity } from 'react-native';
 import { Avatar, Button, Headline, Caption, Paragraph, RadioButton, Subheading, TextInput, Title, Card } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
+import {useFocusEffect} from '@react-navigation/native';
 import { connect } from 'react-redux';
 import { Utility } from '../utility/utility';
 import { } from '../redux/ActionCreators';
@@ -80,6 +81,10 @@ function Schedule(props) {
     const [items, setItems] = useState({});
 
     //lifecycles
+
+    useFocusEffect(()=>{
+        StatusBar.setBackgroundColor('#fff');
+    })
 
     useEffect(() => {
         setData();

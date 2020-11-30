@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Dimensions, StatusBar, BackHandler, ToastAndroid, StyleSheet, FlatList, Animated } from 'react-native';
 import { Avatar, Button, Headline, Paragraph, RadioButton, FAB, Subheading, TextInput, Title, Card, Caption } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
+import {useFocusEffect} from '@react-navigation/native';
 import {connect} from 'react-redux';
 import {Utility} from '../utility/utility';
 import {} from '../redux/ActionCreators';
@@ -70,6 +71,11 @@ function AppointmentsPrevious(props){
 
     //states
     const todayDate = new Date();
+
+    //lifecycles
+    useFocusEffect(()=>{
+        StatusBar.setBackgroundColor('#fff');
+    })
 
     //methods
     

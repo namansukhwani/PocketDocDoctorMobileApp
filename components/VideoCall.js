@@ -32,17 +32,22 @@ function VideoCall(props) {
     const navigation = useNavigation();
     var timer;
     var backTimer;
+    
     //state
+    const [session, setSession] = useState(null);
     const [incomingCall, setIncomingCall] = useState(false);
     const [outgoingCall, setOutgoingCall] = useState(false);
     const [inCall, setInCall] = useState(false);
     const [showToolBar, setShowToolBar] = useState(false)
     const [mic, setMic] = useState(true);
 
+    const [localStream, setLocalStream] = useState(null);
+
     var backCount=0;
     //lifecycle
     useEffect(() => {
         checkCallType();
+        setAllListners();
         showToolBarOnPress()
         const backhandler = BackHandler.addEventListener("hardwareBackPress", () => {
             backCount === 1 ? endCall(): ToastAndroid.show('Press back again to End Call', ToastAndroid.SHORT);
@@ -64,11 +69,55 @@ function VideoCall(props) {
 
     const checkCallType=()=>{
         if(props.route.params.type==="outgoing"){
+            setLocalStream(props.route.params.localStream);
             setOutgoingCall(true);
         }
         else if(props.route.params.type==="incoming"){
+            setSession(props.route.params.session);
             setIncomingCall(true)
         }
+    }
+
+    //call management functions
+
+    const rejectIncomingCall=()=>{
+        CallService.rejectCall(session);
+        navigation.goBack();
+    }
+
+    const stopCall=()=>{
+        CallService.stopCall();
+        navigation.goBack();
+    }
+
+    const micOnOff = () => {
+        setMic(!mic);
+    }
+
+    const endCall = () => {
+        
+        if(props.route.params.type==="outgoing"){
+            stopCall();
+        }
+        else if(props.route.params.type==="incoming"){
+            CallService.rejectCall(props.route.params.session);
+            navigation.goBack();
+        }
+        // else{CallService.stopSounds();
+        // CallService.playSound('end');
+        // navigation.goBack();}
+    };
+
+    const switchCamera = () => {
+
+    };
+
+    //other methods
+
+    const setAllListners=()=>{
+        ConnectyCube.videochat.onRejectCallListener = (session, userId, extension)=>{console.log("reject call listner");};
+        ConnectyCube.videochat.onStopCallListener = (session, userId, extension) =>{console.log("Stoped call Listner");};
+        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{console.log("user nat answered listner");};
     }
 
     const showToolBarOnPress = () => {
@@ -79,22 +128,6 @@ function VideoCall(props) {
         }, 7000)
     }
 
-    const micOnOff = () => {
-        setMic(!mic);
-    }
-
-    const endCall = () => {
-        CallService.stopSounds();
-        CallService.playSound('end');
-        navigation.goBack();
-    };
-
-    const switchCamera = () => {
-
-    };
-
-    const name = 'Dr. Nitesh Sukhwani'
-    const ava = ''
     if (incomingCall) {
         return (
             <View style={{ flex: 1, backgroundColor: '#e3f2fd' }}>
@@ -105,14 +138,14 @@ function VideoCall(props) {
                 </View>
                 <View style={styles.icomingCircle} >
                     <Animatable.View style={{ alignSelf: 'center', }} animation="pulse" easing="ease-out" iterationCount="infinite" duration={860}>
-                        {ava === '' ?
-                            <Avatar.Text style={{ alignSelf: 'center', elevation: 10 }} theme={{ colors: { primary: '#147efb' } }} size={140} label={name.split(' ')[1][0] + name.split(' ')[2][0]} />
+                        {props.route.params.dataIncoming.profilePic === '' ?
+                            <Avatar.Text style={{ alignSelf: 'center', elevation: 10 }} theme={{ colors: { primary: '#147efb' } }} size={140} label={props.route.params.dataIncoming.name.split(' ')[1][0] + props.route.params.dataIncoming.name.split(' ')[2][0]} />
                             :
-                            <Avatar.Image source={{ uri: ava }} style={{ elevation: 10, alignSelf: 'center', }} theme={{ colors: { primary: '#147efb' } }} size={140} />
+                            <Avatar.Image source={{ uri: props.route.params.dataIncoming.profilePic }} style={{ elevation: 10, alignSelf: 'center', }} theme={{ colors: { primary: '#147efb' } }} size={140} />
                         }
                     </Animatable.View>
                 </View>
-                <Title style={{ alignSelf: 'center', fontSize: 28 }}>{name}</Title>
+                <Title style={{ alignSelf: 'center', fontSize: 28 }}>{props.route.params.dataIncoming.name}</Title>
 
 
                 <View style={styles.incomingCallFooter}>
@@ -133,7 +166,7 @@ function VideoCall(props) {
                             size={50}
                             color='#fff'
                             onPress={() => {
-                                endCall()
+                                rejectIncomingCall()
                             }}
                         />
                         <Paragraph>Decline</Paragraph>
@@ -171,7 +204,7 @@ function VideoCall(props) {
                             size={50}
                             color='#fff'
                             onPress={() => {
-                                endCall()
+                                stopCall();
                             }}
                         />
                         <Paragraph>End Call</Paragraph>

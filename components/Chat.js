@@ -386,7 +386,7 @@ function Chat(props) {
                 CallService.startCall([userCallId],{name:props.doctor.doctor.name,profilePic:props.doctor.doctor.profilePictureUrl})
                 .then(localStream=>{
                     setCallLoading(false);
-                    props.navigation.navigate("VideoCall", {type:'outgoing', data: props.route.params.data });
+                    props.navigation.navigate("VideoCall", {type:'outgoing', data: props.route.params.data ,localStream:localStream});
                 })
                 .catch(err=>{console.log(err);setCallLoading(false);});
                 setVideoCallVisible(false)

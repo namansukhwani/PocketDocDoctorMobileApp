@@ -10,6 +10,8 @@ import { HomeHeader } from '../utility/ViewUtility';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
 import Fontisto from 'react-native-vector-icons/FontAwesome';
+import ConnectyCube from 'react-native-connectycube';
+import { CallService } from '../Services/videoCalling/CallService';
 
 const dataSchedule = [
     {
@@ -81,9 +83,13 @@ function Home(props) {
     const [backCount, setBackCount] = useState(0);
 
     //lifecycle
+    useEffect(()=>{
+        setUpCallListeners();
+    },[]);
 
     useFocusEffect(
         useCallback(() => {
+            StatusBar.setBackgroundColor('#fff');
             animatedView1.current.slideInRight(500);
             animatedView2.current.slideInUp(500);
             const backhandler = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -101,7 +107,28 @@ function Home(props) {
 
     //methods
 
+    function setUpCallListeners(){
+        ConnectyCube.videochat.onCallListener=(session, extension)=>onIncomingCall(session,extension);
 
+        ConnectyCube.videochat.onRejectCallListener = (session, userId, extension)=>{console.log("reject call listner");};
+        ConnectyCube.videochat.onStopCallListener = (session, userId, extension) =>{console.log("Stoped call Listner");};
+        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{console.log("user nat answered listner");};
+    }
+
+    function onIncomingCall(session,extraData){
+        CallService.processOnCallListener(session)
+        .then(()=>{
+            props.navigation.navigate("VideoCall", {type:'incoming', dataIncoming:extraData,session:session })
+        })
+        .catch(err=>{
+
+        })
+        // console.log("userId::",userId);
+        // console.log("sessionId::",sessionId);
+        //console.log("data::",extraData);
+        
+    }
+    
     //component
 
     const NewView = ({ item, index }) => {

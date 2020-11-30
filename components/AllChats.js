@@ -3,6 +3,7 @@ import {View,Text,StatusBar, BackHandler, ToastAndroid,StyleSheet,TouchableOpaci
 import {Avatar, Button, Headline, Paragraph, RadioButton, Subheading,TextInput, Title,Searchbar, Badge} from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import {useBackHandler} from '@react-native-community/hooks';
+import {useFocusEffect} from '@react-navigation/native';
 import {connect} from 'react-redux';
 import {Utility} from '../utility/utility';
 import {} from '../redux/ActionCreators';
@@ -35,6 +36,10 @@ function AllChats(props){
     const [loading, setLoading] = useState(true);
 
      //lifecycle
+
+    useFocusEffect(()=>{
+        StatusBar.setBackgroundColor('#fff');
+    })
 
      useEffect(()=>{
         setFilteredData(

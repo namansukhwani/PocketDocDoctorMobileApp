@@ -86,9 +86,9 @@ class Call {
     }
   };
 
-  rejectCall = (session, extension) => {
-    this.stopSounds();
+  rejectCall = (session, extension={}) => {
     session.reject(extension);
+    this.stopSounds();
   };
 
   setAudioMuteState = mute => {
