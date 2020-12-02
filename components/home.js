@@ -111,9 +111,17 @@ function Home(props) {
     function setUpCallListeners(){
         ConnectyCube.videochat.onCallListener=(session, extension)=>onIncomingCall(session,extension);
         ConnectyCube.videochat.onRemoteStreamListener=(session, userId, stream) =>{
-            console.log("remote stream from home.");
+            //console.log("remote stream from home.");
             EventRegister.emit('onRemoteStreamListener',{session:session, userId:userId, stream:stream})
-        }
+        };
+        ConnectyCube.videochat.onAcceptCallListener = (session, userId, extension) =>{
+            console.log("CALLER ACCEPTED YOUR CALL");
+            EventRegister.emit('onAcceptCallListener',{session:session, userId:userId, extension:extension})
+        };
+        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{
+            console.log("user not answered listner");
+            EventRegister.emit('onUserNotAnswerListener',{session:session, userId:userId})
+        };
     }
 
     function onIncomingCall(session,extraData){

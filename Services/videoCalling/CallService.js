@@ -15,7 +15,7 @@ class Call {
   endCall = new Sound(require('../../assets/sounds/end_call.mp3'));
 
   showToast = text => {
-    Toast.showWithGravity(text, Toast.LONG,Toast.BOTTOM);
+    Toast.show(text, Toast.LONG);
   };
 
   getUserById = (userId) => {
