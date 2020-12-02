@@ -15,7 +15,7 @@ class Call {
   endCall = new Sound(require('../../assets/sounds/end_call.mp3'));
 
   showToast = text => {
-    Toast.showWithGravity(text, Toast.LONG);
+    Toast.showWithGravity(text, Toast.LONG,Toast.BOTTOM);
   };
 
   getUserById = (userId) => {
@@ -35,6 +35,32 @@ class Call {
     
   };
 
+  getUser = (userId, key) => {
+    //const user = users.find(user => user.id == userId);
+    const searchParams={filter: {
+      field: "id",
+      param: "in",
+      value: [userId],
+    }}
+    
+    return new Promise((resolve,reject)=>{
+      ConnectyCube.users.get(searchParams)
+      .then((result)=>{
+        //console.log("Result :::",result);
+        const user=result.items[0].user;
+        if (typeof key === 'string') {
+          //console.log(user[key]);
+          resolve(user[key]);
+        }
+    
+        resolve(user);
+      })
+      .catch(err=>{
+        reject(err)
+      })
+    })
+  };
+
   setMediaDevices() {
     return ConnectyCube.videochat.getMediaDevices().then(mediaDevices => {
       //console.log(mediaDevices);
@@ -47,12 +73,16 @@ class Call {
     this._session = session;
     this.setMediaDevices();
 
-    return this._session
+    return new Promise((resolve,reject)=>{
+      this._session
       .getUserMedia(Call.MEDIA_OPTIONS)
       .then(stream => {
         this._session.accept({});
-        return stream;
-      });
+        resolve(stream);
+      })
+      .catch((err)=>{reject(err);});
+    })
+
   };
 
   startCall = (ids,extraData) => {
@@ -110,7 +140,10 @@ class Call {
       if (!this._session) {
         reject();
       } else {
-        const userName = this.getUserById(userId, 'name');
+        var userName;
+        this.getUser(userId, 'full_name')
+        .then(result=>userName=result)
+        .catch(err=>console.log(err));
         const message = `${userName} did not answer`;
 
         this.showToast(message);
@@ -126,14 +159,15 @@ class Call {
         reject();
       }
 
-      if (this._session) {
+      else if (this._session) {
         this.rejectCall(session, { busy: true });
         reject();
       }
-
+      else{
       this.playSound('incoming');
 
       resolve();
+      }
     });
   }
 
@@ -145,7 +179,10 @@ class Call {
 
         reject();
       } else {
-        const userName = this.getUserById(userId, 'name');
+        var userName;
+        this.getUser(userId, 'full_name')
+        .then(result=>userName=result)
+        .catch(err=>console.log(err));
         const message = `${userName} has accepted the call`;
 
         this.showToast(message);
@@ -160,16 +197,20 @@ class Call {
     return new Promise((resolve, reject) => {
       if (userId === session.currentUserID) {
         this._session = null;
-        this.showToast('You have rejected the call on other side');
+        this.showToast('You have rejected the call');
 
         reject();
       } else {
-        const userName = this.getUserById(userId, 'name');
-        const message = extension.busy
-          ? `${userName} is busy`
-          : `${userName} rejected the call request`;
+        this.stopSounds();
+        this.getUser(userId, 'full_name')
+        .then(result=>{
+          const message = extension.busy
+          ? `${result} is busy`
+          : `${result} rejected your call`;
 
-        this.showToast(message);
+          this.showToast(message);
+        })
+        .catch(err=>console.log(err));
 
         resolve();
       }
@@ -183,14 +224,18 @@ class Call {
       if (!this._session) {
         reject();
       } else {
-        const userName = this.getUserById(userId, 'name');
-        const message = `${userName} has ${
+        this.getUser(userId, 'full_name')
+        .then(result=>{
+          const message = `${result} has ${
           isInitiator ? 'stopped' : 'left'
           } the call`;
 
-        this.showToast(message);
+          this.showToast(message);
 
-        resolve();
+          resolve();
+        })
+        .catch(err=>reject(err));
+        
       }
     });
   }

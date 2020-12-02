@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StatusBar, StyleSheet, View, TouchableOpacity, BackHandler, ToastAndroid } from 'react-native';
+import { StatusBar, StyleSheet, View, TouchableOpacity, BackHandler, ToastAndroid,LayoutAnimation,UIManager,Platform } from 'react-native';
 import { Headline, Button, Title, Avatar, IconButton, Paragraph } from 'react-native-paper';
 import { connect } from 'react-redux';
 import { Utility } from '../utility/utility';
@@ -7,11 +7,12 @@ import { } from '../redux/ActionCreators';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
-import ConnectyCube from 'react-native-connectycube';
+import ConnectyCube,{RTCView} from 'react-native-connectycube';
 import { CallService } from '../Services/videoCalling/CallService';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ToolBarVideoCall from './VideoCallToolbar';
 import LoadingScreen from './loadingScreen';
+import { EventRegister } from 'react-native-event-listeners';
 
 //redux
 const mapStateToProps = state => {
@@ -40,12 +41,14 @@ function VideoCall(props) {
     const [inCall, setInCall] = useState(false);
     const [showToolBar, setShowToolBar] = useState(false)
     const [mic, setMic] = useState(true);
+    const [bottomHeight, setBottomHeight] = useState(20);
 
     const [localStream, setLocalStream] = useState(null);
-
+    const [otherUserStream, setOtherUserStream] = useState(null);
     var backCount=0;
     //lifecycle
     useEffect(() => {
+        //setTimeout(()=>{setOutgoingCall(false);setInCall(true)},5000)
         checkCallType();
         setAllListners();
         showToolBarOnPress()
@@ -57,11 +60,16 @@ function VideoCall(props) {
             return true;
         })
         //console.log(props.user.user.name);
+        const onRemoteStreamListener=EventRegister.addEventListener('onRemoteStreamListener',(data)=>{
+            console.log("remote stream here.");
+            _onRemoteStreamListener(data.session,data.userId,data.stream);
+        });
 
         return () => {
             backhandler.remove();
             clearTimeout(timer);
             clearTimeout(backTimer);
+            EventRegister.removeEventListener(onRemoteStreamListener);
         }
     }, [])
 
@@ -80,6 +88,15 @@ function VideoCall(props) {
 
     //call management functions
 
+    const acceptIncomingCall=()=>{
+        CallService.acceptCall(session)
+        .then(localStream=>{
+            setLocalStream(localStream);
+            CallService.setSpeakerphoneOn(true);
+        })
+        .catch(err=>console.log(err));
+    };
+
     const rejectIncomingCall=()=>{
         CallService.rejectCall(session);
         navigation.goBack();
@@ -91,12 +108,15 @@ function VideoCall(props) {
     }
 
     const micOnOff = () => {
+        CallService.setAudioMuteState(!mic);
         setMic(!mic);
     }
 
     const endCall = () => {
-        
-        if(props.route.params.type==="outgoing"){
+        if(inCall){
+            stopCall();
+        }
+        else if(props.route.params.type==="outgoing"){
             stopCall();
         }
         else if(props.route.params.type==="incoming"){
@@ -109,22 +129,47 @@ function VideoCall(props) {
     };
 
     const switchCamera = () => {
-
+        CallService.switchCamera(localStream);
     };
 
     //other methods
 
     const setAllListners=()=>{
-        ConnectyCube.videochat.onRejectCallListener = (session, userId, extension)=>{console.log("reject call listner");};
-        ConnectyCube.videochat.onStopCallListener = (session, userId, extension) =>{console.log("Stoped call Listner");};
+        ConnectyCube.videochat.onRejectCallListener = (session, userId, extension)=>{_onRejectCall(session,userId,extension)};
+        ConnectyCube.videochat.onStopCallListener = (session, userId, extension) =>{_onStopCallListener(session,userId,extension)};
         ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{console.log("user nat answered listner");};
+    }
+
+    const  _onStopCallListener = (session, userId, extension) => {
+        stopCall();
+    }
+
+    const _onRemoteStreamListener=(session, userId, stream) => {
+        // console.log("remote stream  !!!");
+        // console.log("this is a remote stream :::::::",stream);
+        CallService.processOnRemoteStreamListener()
+        .then(()=>{
+            setOtherUserStream(stream);
+            setIncomingCall(false);
+            setInCall(true);
+        });
+    }
+
+    const _onRejectCall=(session, userId, extension)=>{
+        CallService.processOnRejectCallListener(session, userId, extension)
+        .then(()=>{
+            stopCall();
+        })
+        .catch(err=>console.log(err))
     }
 
     const showToolBarOnPress = () => {
 
         setShowToolBar(true);
+        setBottomHeight(90);
         timer = setTimeout(() => {
             setShowToolBar(false)
+            setBottomHeight(20);
         }, 7000)
     }
 
@@ -155,7 +200,7 @@ function VideoCall(props) {
                             style={{ backgroundColor: '#008000' }}
                             size={50}
                             color='#fff'
-                            onPress={() => console.log("pick")}
+                            onPress={() => acceptIncomingCall()}
                         />
                         <Paragraph>Accept</Paragraph>
                     </View>
@@ -217,7 +262,21 @@ function VideoCall(props) {
         return (
             <TouchableOpacity activeOpacity={1} onPress={() => showToolBarOnPress()} style={{ flex: 1, backgroundColor: '#000' }}>
                 <StatusBar backgroundColor="#000" barStyle="light-content" />
-                <ToolBarVideoCall visible={showToolBar} endCall={() => endCall()} switchCamera={() => switchCamera()} micOnOff={() => micOnOff()} mic={mic} />
+                <RTCView
+                    objectFit="cover"
+                    style={{flex:1,backgroundColor:'#000',}}
+                    key='otherUser'
+                    streamURL={otherUserStream.toURL()}
+                />
+                <View style={{...styles.localStream,bottom:bottomHeight}}>
+                <RTCView
+                    objectFit="cover"
+                    style={{flex:1,backgroundColor:'#000',}}
+                    key='localStream'
+                    streamURL={localStream.toURL()}
+                />
+                </View>
+                <ToolBarVideoCall visible={showToolBar} endCall={() => stopCall()} switchCamera={() => switchCamera()} micOnOff={() => micOnOff()} mic={mic} />
             </TouchableOpacity>
         );
     }
@@ -246,6 +305,17 @@ const styles = StyleSheet.create({
         borderRadius: 110,
         marginVertical: 20,
         justifyContent: 'center'
+    },
+    localStream:{
+        backgroundColor:'#000',
+        position:'absolute',
+        width:90,
+        height:160,
+        borderRadius:10,
+        right:20,
+        overflow:'hidden',
+        elevation:10,
+
     }
 });
 

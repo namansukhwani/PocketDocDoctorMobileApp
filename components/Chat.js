@@ -385,6 +385,7 @@ function Chat(props) {
                 console.log("ID::", userCallId);
                 CallService.startCall([userCallId],{name:props.doctor.doctor.name,profilePic:props.doctor.doctor.profilePictureUrl})
                 .then(localStream=>{
+                    //console.log("Local Stream",localStream);
                     setCallLoading(false);
                     props.navigation.navigate("VideoCall", {type:'outgoing', data: props.route.params.data ,localStream:localStream});
                 })

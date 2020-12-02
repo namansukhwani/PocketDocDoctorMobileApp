@@ -12,6 +12,7 @@ import moment from 'moment';
 import Fontisto from 'react-native-vector-icons/FontAwesome';
 import ConnectyCube from 'react-native-connectycube';
 import { CallService } from '../Services/videoCalling/CallService';
+import { EventRegister } from 'react-native-event-listeners';
 
 const dataSchedule = [
     {
@@ -109,10 +110,10 @@ function Home(props) {
 
     function setUpCallListeners(){
         ConnectyCube.videochat.onCallListener=(session, extension)=>onIncomingCall(session,extension);
-
-        ConnectyCube.videochat.onRejectCallListener = (session, userId, extension)=>{console.log("reject call listner");};
-        ConnectyCube.videochat.onStopCallListener = (session, userId, extension) =>{console.log("Stoped call Listner");};
-        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{console.log("user nat answered listner");};
+        ConnectyCube.videochat.onRemoteStreamListener=(session, userId, stream) =>{
+            console.log("remote stream from home.");
+            EventRegister.emit('onRemoteStreamListener',{session:session, userId:userId, stream:stream})
+        }
     }
 
     function onIncomingCall(session,extraData){
