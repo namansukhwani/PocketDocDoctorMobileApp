@@ -451,10 +451,10 @@ function Chat(props) {
                     :
                     <>
                         <List.Section>
-                            <List.Item style={{ ...styles.item }} title="Pick Image from Gallery" left={() => <List.Icon icon="image-plus" color="#147efb" />} onPress={() => pickFromGallery()} />
-                            <List.Item style={styles.item} title="Capture New Image" left={() => <List.Icon icon="camera-plus" color="#147efb" />} onPress={() => captureImage()} />
+                            <List.Item style={{ ...styles.item }} titleStyle={{color:'#147efb'}} title="Pick Image from Gallery" left={() => <List.Icon icon="image-plus" color="#147efb" />} onPress={() => pickFromGallery()} />
+                            <List.Item style={styles.item} titleStyle={{color:'#147efb'}} title="Capture New Image" left={() => <List.Icon icon="camera-plus" color="#147efb" />} onPress={() => captureImage()} />
                         </List.Section>
-                        <Button mode="contained" color="#147efb" onPress={() => setMenuVisible(false)} >Cancel</Button>
+                        <Button mode="contained" color="#147efb" style={{borderRadius:15}} onPress={() => setMenuVisible(false)} >Cancel</Button>
                     </>
                 }
 
@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     item: {
-        backgroundColor: '#b6b6b660',
-        borderRadius: 8,
+        backgroundColor: '#e3f2fd',
+        borderRadius: 15,
         padding: 0,
         marginBottom: 10
     },

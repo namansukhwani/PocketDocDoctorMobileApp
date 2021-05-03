@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { View, StyleSheet, StatusBar, ScrollView, Text, Image,ToastAndroid,Linking} from 'react-native';
 import { Paragraph, IconButton, Subheading, Button } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
@@ -7,7 +7,10 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
 function AppointmentDetailedView(props) {
-    const data = props.route.params.data;
+    // const data = props.route.params.data;
+
+    //states
+    const [data, setData] = useState(props.route.params.data);
 
     //methods
 
@@ -36,6 +39,21 @@ function AppointmentDetailedView(props) {
                 lightColor:"#ffebee",
             }
         }
+    }
+
+    const updateAppointmentData=()=>{
+        firestore().collection('appointments').doc(data.id).get()
+        .then(newData=>{
+            setData({
+                id:newData.id,
+                userData:data.userData,
+                ...newData.data()
+            })
+        })
+        .catch(err=>{
+            console.log(err);
+            ToastAndroid.show('cant update appointment data',ToastAndroid.LONG)
+        })
     }
 
     const acceptAppointment = (appointment) => {
@@ -123,13 +141,14 @@ function AppointmentDetailedView(props) {
                                 })
                             })
                         }
+                        updateAppointmentData();
                     })
 
                    
                 }
                 else {
                     ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
-
+                    updateAppointmentData();
                 }
             })
             .catch(err => {
@@ -144,6 +163,7 @@ function AppointmentDetailedView(props) {
     const declineAppointment = (appointmentId) => {
         firestore().collection('appointments').doc(appointmentId).update({ status: 'declined' })
             .then(() => {
+                updateAppointmentData();
                 ToastAndroid.show(`Appointment declined`, ToastAndroid.SHORT)
             })
             .catch(err => {
@@ -220,8 +240,8 @@ function AppointmentDetailedView(props) {
                     {data.status === "accepted" && <Button mode="contained" style={{ flex: 1, borderRadius: 15 }} contentStyle={{ height: 48 }} color="#147EFB" onPress={() => { }}>Mark as Complete</Button>}
                     {data.status === "pending" &&
                         <>
-                            <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, marginRight:10, borderRadius: 20, elevation: 2 }} labelStyle={{ fontWeight: 'bold', color: "#fff" }} contentStyle={{ height: 45 }} onPress={() => { acceptAppointment(item) }} theme={{ colors: { primary: getColors().backgroundColor } }}>accept</Button>
-                            <Button mode='outlined' style={{ alignSelf: 'center', flex: 1,marginLeft:10,backgroundColor:'#fff',  borderRadius: 15 }} onPress={() => { declineAppointment(item.id) }} theme={{ colors: { primary: '#FC3D39' } }}>decline</Button>
+                            <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, marginRight:10, borderRadius: 20, elevation: 2 }} labelStyle={{ fontWeight: 'bold', color: "#fff" }} contentStyle={{ height: 45 }} onPress={() => { acceptAppointment(data) }} theme={{ colors: { primary: getColors().backgroundColor } }}>accept</Button>
+                            <Button mode='outlined' style={{ alignSelf: 'center', flex: 1,marginLeft:10,backgroundColor:'#fff',  borderRadius: 15 }} onPress={() => { declineAppointment(data.id) }} theme={{ colors: { primary: '#FC3D39' } }}>decline</Button>
                         </>
                     }
                 </View>
