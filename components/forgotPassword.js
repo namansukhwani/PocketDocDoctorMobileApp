@@ -68,7 +68,7 @@ export default function ForgotPassword(props){
                     left={<TextInput.Icon name="email" color="#147EFB"/>}
                     error={error1}
                 />
-                <Button mode="contained" style={{marginTop:35,height:50,justifyContent:'center',marginBottom:'14%'}} color="#147EFB" onPress={()=>handelReset()}>Send password Reset</Button>
+                <Button mode="contained" style={{marginTop:35,borderRadius:15,justifyContent:'center',marginBottom:'14%'}} contentStyle={{height:50}} color="#147EFB" onPress={()=>handelReset()}>Send password Reset</Button>
                 </Animatable.View>
                 <View style={styles.footer}>
                     <Subheading style={{alignSelf:"center",margin:10}} >Don't have an account ?</Subheading>

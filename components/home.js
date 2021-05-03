@@ -13,54 +13,10 @@ import Fontisto from 'react-native-vector-icons/FontAwesome';
 import ConnectyCube from 'react-native-connectycube';
 import { CallService } from '../Services/videoCalling/CallService';
 import { EventRegister } from 'react-native-event-listeners';
-
-const dataSchedule = [
-    {
-        name: "Janhavi Thakur",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/21/2020 11:00 AM"),
-        gender: 'F/20'
-    },
-    {
-        name: "Manas Satpute",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("11/21/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-]
-
-const data = [
-    {
-        name: "Joy Singh",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/21/2020 11:00 AM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Anurag Sirothiya",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("12/13/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Nidan Tegar",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/29/2020 11:00 AM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Rajdeep Kamat",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("11/24/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-]
+import Spinner from 'react-native-spinkit';
+import firestore from '@react-native-firebase/firestore';
+import { addAppointments } from '../redux/ActionCreators';
+import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 //redux
 const mapStateToProps = state => {
@@ -70,7 +26,7 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = (dispatch) => ({
-
+    addAppointments: (appointmentsList) => dispatch(addAppointments(appointmentsList))
 })
 
 function Home(props) {
@@ -82,11 +38,73 @@ function Home(props) {
     const todayDate = new Date();
     const userData = auth().currentUser.providerData;
     const [backCount, setBackCount] = useState(0);
+    const [isNewAppointmentsLoading, setisNewAppointmentsLoading] = useState(true);
+    const [newAppointmentsData, setnewAppointmentsData] = useState([])
+    const [isTodayAppointmentsLoading, setisTodayAppointmentsLoading] = useState(true)
+    const [appointmentsTodayData, setappointmentsTodayData] = useState([])
 
     //lifecycle
-    useEffect(()=>{
+    useEffect(() => {
         setUpCallListeners();
-    },[]);
+
+        const unsbscribeNewAppintments = firestore().collection('appointments')
+            .where('doctorId', '==', auth().currentUser.uid)
+            .where('time', '>=', firestore.Timestamp.now())
+            .where('status', '==', 'pending')
+            .orderBy('time', 'asc')
+            .onSnapshot(querySnapshot => {
+                return Promise.all(querySnapshot.docs.map(async appointment => {
+                    return {
+                        id: appointment.id,
+                        userData: await getUserData(appointment.data().userId),
+                        ...appointment.data()
+                    }
+                }))
+                    .then(list => {
+                        props.addAppointments(list)
+                        setnewAppointmentsData(list.length <= 6 ? list : list.slice(0, 6));
+                        if (isNewAppointmentsLoading) {
+                            setisNewAppointmentsLoading(false)
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        ToastAndroid.show("Unable to fetch the appointment data.", ToastAndroid.LONG)
+                    })
+
+            })
+
+        const unsbscribeSheduledAppointments = firestore().collection('appointments')
+            .where('doctorId', '==', auth().currentUser.uid)
+            .where('time', '>=', firestore.Timestamp.now())
+            .where('status', '==', 'accepted')
+            .orderBy('time', 'asc')
+            .limit(4)
+            .onSnapshot(querySnapshot => {
+                return Promise.all(querySnapshot.docs.map(async appointment => {
+                    return {
+                        id: appointment.id,
+                        userData: await getUserData(appointment.data().userId),
+                        ...appointment.data()
+                    }
+                }))
+                    .then(list => {
+                        setappointmentsTodayData(list)
+                        if (isTodayAppointmentsLoading) {
+                            setisTodayAppointmentsLoading(false)
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        ToastAndroid.show("Unable to fetch scheduled appointment data.", ToastAndroid.LONG)
+                    })
+            })
+
+        return () => {
+            unsbscribeNewAppintments();
+            unsbscribeSheduledAppointments();
+        }
+    }, []);
 
     useFocusEffect(
         useCallback(() => {
@@ -107,43 +125,167 @@ function Home(props) {
     );
 
     //methods
+    const acceptAppointment = (appointment) => {
+        firestore().collection('appointments').doc(appointment.id).update({ status: "accepted" })
+            .then(() => {
+                if (appointment.type == "online") {
+                    firestore().collection('chatRooms')
+                    .where('doctorId','==',auth().currentUser.uid)
+                    .where('userId','==',appointment.userId)
+                    .get()
+                    .then(data=>{
+                        if(data.size===1){
+                            const chatRoom=data.docs.map(room=>{
+                                return room.data();
+                            })
 
-    function setUpCallListeners(){
-        ConnectyCube.videochat.onCallListener=(session, extension)=>onIncomingCall(session,extension);
-        ConnectyCube.videochat.onRemoteStreamListener=(session, userId, stream) =>{
+                            const messsData={
+                                body:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                createdDate:firestore.Timestamp.now(),
+                                mediaUrl:'',
+                                senderId:auth().currentUser.uid,
+                                status:false,
+                                type:'text'
+                            }
+                            firestore().collection('chatRooms').doc(chatRoom[0].roomId).collection('messages').add(messsData)
+                            .then(()=>{
+
+                            })
+                            .catch(err=>console.log(err))
+
+                            const updatData={
+                                appointmentDate:appointment.time,
+                                lastMessage:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                doctorMessageCount:chatRoom[0].doctorMessageCount+1,
+                                lastUpdatedDate:firestore.Timestamp.now()
+                            }
+
+                            firestore().collection('chatRooms').doc(chatRoom[0].roomId).update(updatData)
+                            .then(()=>{
+                                ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
+                            })
+                            .catch(err=>{
+                                console.log(err);
+                            })
+                        }
+                        else{
+                            const chatRoomData = {
+                                appointmentDate:appointment.time,
+                                createdDate:firestore.Timestamp.now(),
+                                lastUpdatedDate:firestore.Timestamp.now(),
+                                doctorId:auth().currentUser.uid,
+                                doctorName:props.doctor.doctor.name,
+                                doctorProfilePicUrl:props.doctor.doctor.profilePictureUrl,
+                                doctorMessageCount:1,
+                                userId:appointment.userId,
+                                userMessageCount:0,
+                                userName:appointment.userData.name,
+                                userProfilePicUrl:appointment.userData.profilePictureUrl,
+                                lastMessage:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                roomId:'',
+                            }
+
+                            firestore().collection('chatRooms').add(chatRoomData)
+                            .then(values=>{
+                                firestore().collection('chatRooms').doc(values.id).update({roomId:values.id})
+                                .then(()=>{
+                                    const messData={
+                                        body:chatRoomData.lastMessage,
+                                        createdDate:firestore.Timestamp.now(),
+                                        mediaUrl:'',
+                                        senderId:auth().currentUser.uid,
+                                        status:false,
+                                        type:'text'
+                                    }
+                                    firestore().collection('chatRooms').doc(values.id).collection('messages').add(messData)
+                                    .then(mess=>{
+                                        ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
+                                    })
+                                    .catch(err=>{
+                                        console.log(err);
+                                    })
+                                })
+                                .catch(err=>{
+                                    console.log(err);
+                                })
+                            })
+                        }
+                    })
+
+                   
+                }
+                else {
+                    ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
+
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                ToastAndroid.show("Unable to perform this action currently.", ToastAndroid.LONG)
+            })
+
+
+
+    }
+
+    const declineAppointment = (appointmentId) => {
+        firestore().collection('appointments').doc(appointmentId).update({ status: 'declined' })
+            .then(() => {
+                ToastAndroid.show(`Appointment declined`, ToastAndroid.SHORT)
+            })
+            .catch(err => {
+                console.log(err);
+                ToastAndroid.show("Unable to perform this action currently.", ToastAndroid.LONG)
+            })
+    }
+
+    const getUserData = (uid) => {
+        return firestore().collection('users').doc(uid).get()
+            .then(data => {
+                return data.data();
+            })
+            .catch(err => {
+                console.log(err);
+            })
+    }
+
+    function setUpCallListeners() {
+        ConnectyCube.videochat.onCallListener = (session, extension) => onIncomingCall(session, extension);
+        ConnectyCube.videochat.onRemoteStreamListener = (session, userId, stream) => {
             //console.log("remote stream from home.");
-            EventRegister.emit('onRemoteStreamListener',{session:session, userId:userId, stream:stream})
+            EventRegister.emit('onRemoteStreamListener', { session: session, userId: userId, stream: stream })
         };
-        ConnectyCube.videochat.onAcceptCallListener = (session, userId, extension) =>{
+        ConnectyCube.videochat.onAcceptCallListener = (session, userId, extension) => {
             console.log("CALLER ACCEPTED YOUR CALL");
-            EventRegister.emit('onAcceptCallListener',{session:session, userId:userId, extension:extension})
+            EventRegister.emit('onAcceptCallListener', { session: session, userId: userId, extension: extension })
         };
-        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) =>{
+        ConnectyCube.videochat.onUserNotAnswerListener = (session, userId) => {
             console.log("user not answered listner");
-            EventRegister.emit('onUserNotAnswerListener',{session:session, userId:userId})
+            EventRegister.emit('onUserNotAnswerListener', { session: session, userId: userId })
         };
     }
 
-    function onIncomingCall(session,extraData){
+    function onIncomingCall(session, extraData) {
         CallService.processOnCallListener(session)
-        .then(()=>{
-            props.navigation.navigate("VideoCall", {type:'incoming', dataIncoming:extraData,session:session })
-        })
-        .catch(err=>{
+            .then(() => {
+                props.navigation.navigate("VideoCall", { type: 'incoming', dataIncoming: extraData, session: session })
+            })
+            .catch(err => {
 
-        })
+            })
         // console.log("userId::",userId);
         // console.log("sessionId::",sessionId);
         //console.log("data::",extraData);
-        
+
     }
-    
+
     //component
 
     const NewView = ({ item, index }) => {
 
+        let genderAge = item.userData.gender[0].toUpperCase() + "/" + moment().diff(new Date(item.userData.dob).toLocaleDateString(), 'years', false)
         var time;
-        var appointmentDate = new Date(item.time);
+        var appointmentDate = item.time.toDate();
         const yesterday = new Date(Date.now() - 86400000);
         if (todayDate.getDate() === appointmentDate.getDate()) {
             var time = "Today " + moment(appointmentDate).format("hh:mm a");
@@ -160,19 +302,19 @@ function Home(props) {
 
         return (
             <Animatable.View animation="slideInUp" style={{ marginBottom: 10 }} duration={500} delay={50} useNativeDriver={true}>
-                <Card style={styles.card} onPress={() => { }}>
+                <Card style={styles.card} onPress={() => { props.navigation.navigate('AppointmentDetailedView', { data: item }) }}>
                     <Card.Content style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
                         <View style={{ flexDirection: "row" }}>
                             <Fontisto name="user" size={30} style={{ margin: 5, marginRight: 10, alignSelf: "center" }} color="#147efb" />
-                            <Title style={{ paddingVertical: 0, alignSelf: "center", marginVertical: 0, flex: 1 }}>{item.name}</Title>
+                            <Title style={{ paddingVertical: 0, alignSelf: "center", marginVertical: 0, flex: 1 }}>{item.userData.name}</Title>
                         </View>
-                        <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{item.gender}</Caption>
-                        <Paragraph numberOfLines={2} style={{ width: '80%', marginVertical: 0, padding: 0 }}><Paragraph style={{ fontWeight: 'bold' }}>issue:</Paragraph>{item.issue}</Paragraph>
+                        <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{genderAge}</Caption>
+                        <Paragraph numberOfLines={2} style={{ width: '80%', marginVertical: 0, padding: 0 }}><Paragraph style={{ fontWeight: 'bold' }}>issue:</Paragraph>{item.problem}</Paragraph>
                         {/* <View style={{ width: '60%' }}>
                             <Paragraph numberOfLines={1} style={{ overflow: "hidden", }}>adfasdf</Paragraph>
                         </View> */}
                         <Paragraph style={{ fontWeight: "bold" }}>mode:</Paragraph>
-                        <Subheading style={styles.date}>{item.mode}</Subheading>
+                        <Subheading style={styles.date}>{item.type}</Subheading>
                         <View style={styles.status}>
                             <Text style={{
                                 textTransform: "uppercase", fontSize: 14
@@ -181,8 +323,8 @@ function Home(props) {
                         </View>
                     </Card.Content>
                     <View style={styles.footer}>
-                        <Button mode='outlined' style={{ alignSelf: 'center', flex: 1, margin: 10 }} theme={{ colors: { primary: '#147efb' } }}>accept</Button>
-                        <Button mode='outlined' style={{ alignSelf: 'center', flex: 1, margin: 10 }} theme={{ colors: { primary: '#FC3D39' } }}>decline</Button>
+                        <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, margin: 10, borderRadius: 20,elevation:2 }} labelStyle={{fontWeight:'bold',color:"#fff"}} contentStyle={{height:45}} onPress={() => { acceptAppointment(item) }} theme={{ colors: { primary: '#147efb' } }}>accept</Button>
+                        <Button mode='outlined' style={{ alignSelf: 'center', flex: 1, margin: 10, borderRadius: 15 }} onPress={() => { declineAppointment(item.id) }} theme={{ colors: { primary: '#FC3D39' } }}>decline</Button>
                     </View>
                 </Card>
             </Animatable.View>
@@ -190,16 +332,18 @@ function Home(props) {
     }
 
     const TodayView = ({ item, index }) => {
+        let genderAge = item.userData.gender[0].toUpperCase() + "/" + moment().diff(new Date(item.userData.dob).toLocaleDateString(), 'years', false)
+
         return (
-            <Animatable.View animation="slideInRight" style={{}} duration={500} delay={50} useNativeDriver={true}>
-                <TouchableOpacity style={styles.appointmentsToday}>
-                    <Title numberOfLines={1}>{item.name}</Title>
-                    <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{item.gender}</Caption>
-                    <Paragraph numberOfLines={1} style={{ overflow: "hidden", width: 210 }}><Paragraph style={{ fontWeight: "bold" }}>issue: </Paragraph>{item.issue}</Paragraph>
+            <Animatable.View key={index.toString()} animation="slideInRight" style={{}} duration={500} delay={50} useNativeDriver={true}>
+                <TouchableOpacity onPress={() => { props.navigation.navigate('AppointmentDetailedView', { data: item }) }} style={styles.appointmentsToday}>
+                    <Title numberOfLines={1}>{item.userData.name}</Title>
+                    <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{genderAge}</Caption>
+                    <Paragraph numberOfLines={1} style={{ overflow: "hidden", width: 210 }}><Paragraph style={{ fontWeight: "bold" }}>issue: </Paragraph>{item.problem}</Paragraph>
                     <Paragraph style={{ fontWeight: "bold" }}>Mode:</Paragraph>
-                    <Subheading style={{ textTransform: 'uppercase', paddingHorizontal: 20, paddingVertical: 5, fontWeight: 'bold', borderRadius: 25, backgroundColor: '#fff', elevation: 3, alignSelf: 'flex-start' }}>{item.mode}</Subheading>
+                    <Subheading style={{ textTransform: 'uppercase', paddingHorizontal: 20, paddingVertical: 5, fontWeight: 'bold', borderRadius: 25, backgroundColor: '#fff', elevation: 3, alignSelf: 'flex-start' }}>{item.type}</Subheading>
                     <View style={styles.todayTime}>
-                        <Title style={{ alignSelf: "center", textAlign: "center", color: "#fff", textTransform: "uppercase" }}>{moment(item.time).format("hh:mm a")}</Title>
+                        <Title style={{ alignSelf: "center", textAlign: "center", color: "#fff", textTransform: "uppercase" }}>{moment(item.time.toDate()).format("hh:mm a")}</Title>
                     </View>
                 </TouchableOpacity>
             </Animatable.View>
@@ -213,27 +357,61 @@ function Home(props) {
             <ScrollView contentContainerStyle={{ paddingBottom: '0%' }} nestedScrollEnabled={true}>
                 <Animatable.View animation="slideInUp" style={{}} duration={500} delay={50} useNativeDriver={true}>
                     <Subheading style={{ fontWeight: 'bold', paddingTop: 15, paddingHorizontal: 15 }}>Schedule Today</Subheading>
-                    <Animatable.View ref={ref=>animatedView1.current=ref}  useNativeDriver={true}>
-                        <FlatList
-                            data={dataSchedule}
-                            renderItem={TodayView}
-                            keyExtractor={(item, index) => index.toString()}
-                            horizontal={true}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{ paddingHorizontal: 15 }}
-                            nestedScrollEnabled={true}
-                        />
+                    <Animatable.View ref={ref => animatedView1.current = ref} useNativeDriver={true}>
+                        {isTodayAppointmentsLoading ?
+                            <View style={{ marginVertical: '6%', justifyContent: 'center' }}>
+                                <Spinner
+                                    type="Wave"
+                                    color="#147efb"
+                                    style={{ alignSelf: "center" }}
+                                    isVisible={true}
+                                    size={60}
+                                />
+                            </View>
+                            :
+                            appointmentsTodayData.length === 0 ?
+                                <View style={{ flex: 1, justifyContent: 'center', backgroundColor: "#fff" }}>
+                                    <Caption style={{ width: '50%', alignSelf: "center", textAlign: 'center' }}>No Appointments Today just relax!! </Caption>
+                                </View>
+                                :
+                                <FlatList
+                                    data={appointmentsTodayData}
+                                    renderItem={TodayView}
+                                    keyExtractor={(item, index) => index.toString()}
+                                    horizontal={true}
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingHorizontal: 15 }}
+                                    nestedScrollEnabled={true}
+                                />
+                        }
                     </Animatable.View>
                     <Subheading style={{ fontWeight: 'bold', paddingHorizontal: 15 }}>New Appointments</Subheading>
-                    <Animatable.View ref={ref=>animatedView2.current=ref} useNativeDriver={true}>
-                        <FlatList
-                            data={data}
-                            renderItem={NewView}
-                            keyExtractor={(item, index) => index.toString()}
-                            contentContainerStyle={{ paddingHorizontal: 15 }}
-                            showsVerticalScrollIndicator={false}
-                            nestedScrollEnabled={true}
-                        />
+                    <Animatable.View ref={ref => animatedView2.current = ref} useNativeDriver={true}>
+                        {isNewAppointmentsLoading ?
+                            <View style={{ marginVertical: '30%', justifyContent: 'center' }}>
+                                <Spinner
+                                    type="Wave"
+                                    color="#147efb"
+                                    style={{ alignSelf: "center" }}
+                                    isVisible={true}
+                                    size={60}
+                                />
+                            </View>
+                            :
+                            newAppointmentsData.length === 0 ?
+                                <View style={{ flex: 1, marginTop: '30%', justifyContent: 'center', alignItems: 'center' }}>
+                                    <ComunityIcon name='calendar-alert' size={80} color="#147efb" />
+                                    <Subheading style={{}}>No New Appointments.</Subheading>
+                                </View>
+                                :
+                                <FlatList
+                                    data={newAppointmentsData}
+                                    renderItem={NewView}
+                                    keyExtractor={(item, index) => index.toString()}
+                                    contentContainerStyle={{ paddingHorizontal: 15 }}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled={true}
+                                />}
                     </Animatable.View>
                 </Animatable.View>
             </ScrollView>
@@ -265,16 +443,16 @@ const styles = StyleSheet.create({
     },
     card: {
         elevation: 3,
-        borderRadius: 10,
+        borderRadius: 15,
     },
     date: {
-        backgroundColor: "#147efb",
+        backgroundColor: "#e3f2fd",
         paddingHorizontal: 20,
         borderRadius: 25,
         paddingVertical: 8,
         alignSelf: 'flex-start',
         textTransform: 'uppercase',
-        color: '#fff',
+        color: '#147efb',
         marginVertical: 10
     },
     status: {
@@ -283,15 +461,16 @@ const styles = StyleSheet.create({
         bottom: 0,
         backgroundColor: '#f9f9f9',
         borderTopLeftRadius: 21.5,
-        borderBottomRightRadius: 10,
+        // borderBottomRightRadius: 10,
         paddingHorizontal: 20,
         height: 43,
         alignSelf: 'center',
         justifyContent: 'center',
         padding: 5,
-        borderLeftWidth: 0.3,
-        borderTopWidth: 0.3,
-        borderColor: '#b6b6b6'
+        // borderLeftWidth: 0.3,
+        // borderTopWidth: 0.3,
+        // borderColor: '#b6b6b6',
+        elevation:2,
     },
     footer: {
         width: '100%',
@@ -303,7 +482,8 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 10,
         borderBottomLeftRadius: 10,
         flexDirection: "row",
-        justifyContent: 'center'
+        justifyContent: 'center',
+        elevation:2
     }
 })
 

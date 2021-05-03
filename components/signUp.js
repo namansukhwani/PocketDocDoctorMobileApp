@@ -199,7 +199,7 @@ export default function SignUp(props){
                             secureTextEntry={!showPass2}
                             error={error4}
                         />
-                        <Button mode="contained" loading={loading} icon="account-plus" style={{marginTop:35}} color="#147EFB" onPress={()=>handelSignUp()}>SIGN UP</Button>
+                        <Button mode="contained" loading={loading} icon="account-plus" style={{marginTop:35,borderRadius:15}} contentStyle={{height:40}} color="#147EFB" onPress={()=>handelSignUp()}>SIGN UP</Button>
                     
                     {/*<View style={styles.loginButton}>
                         <IconButton

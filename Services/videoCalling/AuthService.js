@@ -16,7 +16,7 @@ class Auth {
                         .catch((error) => { });
                 },
             },
-            debug: { mode: 1 }
+            // debug: { mode: 1 }
         }
 
         ConnectyCube.init(ConnectyCubeConfig, CONFIG);

@@ -24,6 +24,7 @@ import { HeaderTitle } from '../utility/ViewUtility';
 import AppointmentsCurrent from './AppointmentsCurrent';
 import AppointmentsPrevious from './AppointmentsPrevious';
 import VideoCall from './VideoCall';
+import AppointmentDetailedView from './AppointmentDetailedView';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -272,6 +273,20 @@ export default function Main() {
                         headerShown: false
                     })}
                     component={VideoCall}
+                />
+                <Stack.Screen
+                    name="AppointmentDetailedView"
+                    options={({ route, navigation }) => ({
+                        headerTitle: '',
+                        headerTransparent: true,
+                        headerTitleAlign: 'center',
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-back" size={30} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                    })}
+                    component={AppointmentDetailedView}
                 />
             </Stack.Navigator>
         </NavigationContainer>

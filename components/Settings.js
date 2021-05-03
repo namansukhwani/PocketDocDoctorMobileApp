@@ -23,10 +23,11 @@ const mapDispatchToProps = (dispatch) => ({
 
 })
 
+const allDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
 //component
 function Settings(props) {
 
-    const allDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
     //refs
     const animatedView = useRef(0);
 
@@ -47,10 +48,12 @@ function Settings(props) {
     const [showToTime, setShowToTime] = useState(false);
 
     //lifecycle
-    useFocusEffect(() => {
-        StatusBar.setBackgroundColor('#e3f2fd');
-        animatedView.current.slideInUp(500);
-    })
+    useFocusEffect(
+        useCallback(() => {
+            StatusBar.setBackgroundColor('#e3f2fd');
+            animatedView.current.slideInUp(500);
+        }, [])
+    )
 
     //methods
 
@@ -90,7 +93,7 @@ function Settings(props) {
             <View style={{ flex: 1, backgroundColor: "#fff" }}>
                 <StatusBar backgroundColor="#e3f2fd" barStyle="dark-content" translucent={false} />
                 <ScrollView >
-                    <Animatable.View ref={ref => animatedView.current = ref} animation="slideInUp" style={{ backgroundColor: '#e3f2fd' }} duration={500} delay={50} useNativeDriver={true}>
+                    <View style={{ backgroundColor: '#e3f2fd' }} >
                         <View style={{ paddingHorizontal: 15, }}>
                             {props.doctor.doctor.profilePictureUrl === '' ?
                                 <Avatar.Image style={{ elevation: 2, alignSelf: 'center', marginBottom: 15, marginTop: 10 }} size={130} source={require('../assets/user_avatar.png')} />
@@ -116,7 +119,7 @@ function Settings(props) {
                             />
                         </View>
 
-                        <View style={{ flex: 1, padding: 15, elevation: 6, backgroundColor: '#fff', borderTopRightRadius: 30, borderTopLeftRadius: 30 }}>
+                        <Animatable.View ref={ref => animatedView.current = ref} animation="slideInUp" duration={500} delay={50} useNativeDriver={true} style={{ flex: 1, padding: 15, elevation: 6, backgroundColor: '#fff', borderTopRightRadius: 30, borderTopLeftRadius: 30 }}>
                             <List.Section>
                                 <List.Item
                                     onPress={() => { }}
@@ -139,10 +142,10 @@ function Settings(props) {
                                 <List.Subheader style={{ paddingHorizontal: 0 }}>Availability Time</List.Subheader>
                                 <View style={{ flexDirection: "row", justifyContent: "center" }}>
                                     <TouchableOpacity onPress={() => setShowFromTime(true)} style={{ ...styles.timeButton, marginRight: 10 }}>
-                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold' }}>From: </Subheading>{moment(fromTime).format("hh:mm a")}</Subheading>
+                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold',color:"#147efb" }}>From: </Subheading>{moment(fromTime).format("hh:mm a")}</Subheading>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => setShowToTime(true)} style={styles.timeButton}>
-                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold' }}>To: </Subheading>{moment(toTime).format("hh:mm a")}</Subheading>
+                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold',color:"#147efb" }}>To: </Subheading>{moment(toTime).format("hh:mm a")}</Subheading>
                                     </TouchableOpacity>
                                 </View>
                                 <List.Subheader style={{ paddingHorizontal: 0, paddingBottom: 0 }}>Availability Days</List.Subheader>
@@ -150,20 +153,11 @@ function Settings(props) {
                                 <TouchableOpacity style={styles.days} onPress={() => setShowDaysSelection(true)}>
                                     {days.map(dayNo => {
 
-                                        if (days[days.length - 1] === dayNo) {
-                                            return (
-                                                <View key={dayNo.toString()} style={{ flex: 1, justifyContent: 'center', padding: 10, borderTopRightRadius: 10, borderBottomRightRadius: 10, borderWidth: 0 }}>
-                                                    <Paragraph style={{ alignSelf: 'center' }}>{allDays[dayNo]}</Paragraph>
-                                                </View>
-                                            )
-                                        }
-                                        else {
-                                            return (
-                                                <View key={dayNo.toString()} style={{ flex: 1, justifyContent: 'center', padding: 10, borderRightWidth: 1, borderColor: '#b6b6b6' }}>
-                                                    <Paragraph style={{ alignSelf: 'center' }}>{allDays[dayNo]}</Paragraph>
-                                                </View>
-                                            )
-                                        }
+                                        return (
+                                            <View key={dayNo.toString()} style={{ flex: 1, justifyContent: 'center', padding: 10, }}>
+                                                <Paragraph style={{ alignSelf: 'center', color: '#147efb', fontWeight: 'bold' }}>{allDays[dayNo]}</Paragraph>
+                                            </View>
+                                        )
                                     })}
                                 </TouchableOpacity>
                                 <List.Subheader style={{ paddingHorizontal: 0 }}>ACCOUNT SETTINGS</List.Subheader>
@@ -205,9 +199,9 @@ function Settings(props) {
 
                             </List.Section>
 
-                            <Button mode="contained" color="#147efb" style={{ marginTop: 15 }} onPress={() => { auth().signOut(); props.navigation.navigate("login") }} >logout</Button>
-                        </View>
-                    </Animatable.View>
+                            <Button mode="contained" color="#147efb" style={{ marginTop: 15, borderRadius: 15 }} contentStyle={{ height: 45 }} onPress={() => { auth().signOut(); props.navigation.navigate("login") }} >logout</Button>
+                        </Animatable.View>
+                    </View>
                 </ScrollView>
                 {showFromTime &&
                     <DateTimePicker
@@ -260,49 +254,49 @@ function Settings(props) {
                             <List.Section >
                                 <List.Item
                                     title="Sunday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold', color:sunday ? "#147efb" : "#000"}}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={sunday ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setsunday(!sunday)}
                                 />
                                 <List.Item
                                     title="Monday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold',color:monday ? "#147efb" : "#000" }}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={monday ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setmonday(!monday)}
                                 />
                                 <List.Item
                                     title="Tuesday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold', color:tue ? "#147efb" : "#000"}}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={tue ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => settue(!tue)}
                                 />
                                 <List.Item
                                     title="Wednesday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold',color:wed ? "#147efb" : "#000" }}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={wed ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setwed(!wed)}
                                 />
                                 <List.Item
                                     title="Thursday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold',color:thu ? "#147efb" : "#000" }}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={thu ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setthu(!thu)}
                                 />
                                 <List.Item
                                     title="Friday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold',color:fri ? "#147efb" : "#000" }}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={fri ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setfri(!fri)}
                                 />
                                 <List.Item
                                     title="Saturday"
-                                    titleStyle={{ fontWeight: 'bold', }}
+                                    titleStyle={{ fontWeight: 'bold',color:sat ? "#147efb" : "#000" }}
                                     style={styles.daysItem}
                                     right={() => <Checkbox.IOS status={sat ? "checked" : "unchecked"} color="#147efb" />}
                                     onPress={() => setsat(!sat)}
@@ -335,24 +329,28 @@ const styles = StyleSheet.create({
         marginBottom: 12
     },
     timeButton: {
+        backgroundColor:"#e3f2fd",
         flex: 1,
         padding: 10,
-        borderWidth: 1,
+        // borderWidth: 1,
         borderColor: '#b6b6b6',
-        borderRadius: 10
+        borderRadius: 15,
+        elevation:1
     },
     days: {
         flexDirection: 'row',
-        borderWidth: 1,
-        borderColor: '#b6b6b6',
-        borderRadius: 10
+        backgroundColor: '#e3f2fd',
+        // borderWidth: 1,
+        // borderColor: '#b6b6b6',
+        borderRadius: 15,
+        elevation:1
     },
     daysItem: {
-        elevation: 2,
-        backgroundColor: '#fff',
-        borderRadius: 6,
+        elevation: 1,
+        backgroundColor: '#e3f2fd',
+        borderRadius: 15,
         marginBottom: 12,
-        borderWidth: 1,
+        // borderWidth: 1,
         borderColor: '#b6b6b6'
     },
 });

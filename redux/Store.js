@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import thunk from 'redux-thunk';
 import {persistCombineReducers,persistStore} from 'redux-persist';
 import {doctor} from './Doctor';
+import {appointments} from './appointments';
 
 export const ConfigureStore=()=>{
     const config={
@@ -14,6 +15,7 @@ export const ConfigureStore=()=>{
     const store=createStore(
         persistCombineReducers(config,{
             doctor,
+            appointments
         }),
         applyMiddleware(thunk)
     );

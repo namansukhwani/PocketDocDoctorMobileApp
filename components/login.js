@@ -281,7 +281,7 @@ function Login(props){
                             error={error2}
                         />
                         <Button mode="text" style={{width:190,alignSelf:'center'}} color="#147EFB" compact={true} onPress={()=>props.navigation.navigate("forgotPassword",{email:email})}>Forgot Password?</Button>
-                        <Button mode="contained" loading={loading} icon="arrow-right-circle" style={{marginTop:35}} color="#147EFB" onPress={()=>handelLogin()}>LOGIN</Button>
+                        <Button mode="contained" loading={loading} icon="arrow-right-circle" style={{marginTop:35,borderRadius:15}} contentStyle={{height:40}} color="#147EFB" onPress={()=>handelLogin()}>LOGIN</Button>
                         </View>
                         <View style={styles.footer}>
                             <Subheading style={{alignSelf:"center",margin:10}} >Don't have an account ?</Subheading>

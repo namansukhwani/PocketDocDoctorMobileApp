@@ -35,7 +35,7 @@ export const HeaderTitle=({title})=>{
 
 export const HomeHeader = ({ profilePic, name, onPress ,phoneNo}) => {
     return (
-        <Appbar.Header style={{ justifyContent: 'space-between', paddingHorizontal: 10 }} theme={{ colors: { primary: '#fff' } }}>
+        <Appbar.Header style={{ justifyContent: 'space-between', paddingHorizontal: 10,elevation:0 }} theme={{ colors: { primary: '#fff' } }}>
             <Image source={require('../assets/PocketDoctorIcon.png')} style={{width:35,height:35,resizeMode:"contain"}} />
             <TouchableOpacity style={{ flexDirection: "row", }} onPress={() => onPress()} >
                 <View style={{alignSelf:"center"}}>

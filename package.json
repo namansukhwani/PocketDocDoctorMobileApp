@@ -8,6 +8,7 @@
     "start": "react-native start",
     "android:saveAssets": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
     "android:debugAPK": "cd D:/StudiesIMPORTANT/CollegeMinorProjecet/PocketDocDoctor/android && gradlew assembleDebug",
+    "android:clean": "cd D:/StudiesIMPORTANT/CollegeMinorProjecet/PocketDocDoctor/android && gradlew assembleDebug",
     "test": "jest",
     "lint": "eslint ."
   },

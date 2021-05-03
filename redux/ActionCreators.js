@@ -1,119 +1,173 @@
 import * as ActionTypes from './ActionTypes';
+import firestore from '@react-native-firebase/firestore';
 
-const URL="https://pdoc-api.herokuapp.com/";
+const URL = "https://pdoc-api.herokuapp.com/";
 
 //User Functions
-export const getDoctorDetails=(uid)=>dispatch=>{
+export const getDoctorDetails = (uid) => dispatch => {
     dispatch(doctorLoading());
 
-    return new Promise((resolve,reject)=>{
+    return new Promise((resolve, reject) => {
 
-        fetch(URL+`/doctors/${uid}`,{
-            method:"GET",
-            headers:new Headers({
-                'Origin':'https://PocketDocOnly.com',
-                'Content-Type':'application/json'
-            }),
-        })
-        .then(res=>res.json())
-        .then(response=>{
-            if(!response.status){
-                dispatch(doctorError(response.message));
-                reject({err:response.message,status:true});
-            }
-            else{
-               dispatch(doctorAdd(response.data));
-               resolve();
-            }
-        })
-        .catch(err=>{
-            console.log(err);
-            dispatch(doctorError(err));
-            reject({err:err,status:false});
-        })
+
+        firestore().collection('doctors').doc(uid).get()
+            .then(doctor => {
+                if (doctor.exists) {
+                    dispatch(doctorAdd(doctor.data()));
+                    resolve();
+                }
+                else {
+                    dispatch(doctorError("doctor does not exists"));
+                    reject({ err: "doctor does not exists", status: true });
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                dispatch(doctorError(err));
+                reject({ err: err, status: false });
+            })
     })
 }
 
-export const addDoctorDetails=(uid,userData)=>dispatch=>{
+export const addDoctorDetails = (uid, userData) => dispatch => {
     dispatch(doctorLoading());
     console.log("redux userLoading");
 
-    return new Promise((resolve,reject)=>{
-        fetch(URL+`/doctors/${uid}`,{
-            method:"POST",
-            headers:new Headers({
-                'Origin':'https://PocketDocOnly.com',
-                'Content-Type':'application/json'
-            }),
-            body:userData
-        })
-        .then(res=>res.json())
-        .then(response=>{
-            if(!response.status){
-                console.log("redux userError");
-                dispatch(doctorError(response.message));
-                reject(response.message);
-            }
-            else{
-                console.log("redux userAdd");
-                dispatch(doctorAdd(response.data));
-                resolve();
-            }
-        })
-        .catch(err=>{
-            console.log(err);
-            dispatch(doctorError(err));
-            reject(err);
-        })
+    return new Promise((resolve, reject) => {
+
+        firestore().collection('doctors').doc(uid).set(userData)
+            .then(() => {
+                firestore().collection('doctors').doc(uid).get()
+                    .then(doctor => {
+                        if (doctor.exists) {
+                            console.log("redux userAdd");
+                            dispatch(doctorAdd(doctor.data()));
+                            resolve();
+                        }
+                        else {
+                            dispatch(doctorError("doctor does not exists"));
+                            reject({ err: "doctor does not exists", status: true });
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        dispatch(doctorError(err))
+                        reject(err)
+                    })
+            })
+            .catch(err => {
+                console.log(err);
+                dispatch(doctorError(err));
+                reject(err);
+            })
+
+        // fetch(URL+`/doctors/${uid}`,{
+        //     method:"POST",
+        //     headers:new Headers({
+        //         'Origin':'https://PocketDocOnly.com',
+        //         'Content-Type':'application/json'
+        //     }),
+        //     body:userData
+        // })
+        // .then(res=>res.json())
+        // .then(response=>{
+        //     if(!response.status){
+        //         console.log("redux userError");
+        //         dispatch(doctorError(response.message));
+        //         reject(response.message);
+        //     }
+        //     else{
+        //         console.log("redux userAdd");
+        //         dispatch(doctorAdd(response.data));
+        //         resolve();
+        //     }
+        // })
+        // .catch(err=>{
+        //     console.log(err);
+        //     dispatch(doctorError(err));
+        //     reject(err);
+        // })
     })
 }
 
-export const updateDoctorDetails=(uid,updateData)=>dispatch=>{
+export const updateDoctorDetails = (uid, updateData) => dispatch => {
     dispatch(doctorLoading());
     console.log("redux userLoading");
-    
-    return new Promise((resolve,reject)=>{
-        fetch(URL+`/doctors/${uid}`,{
-            method:"PUT",
-            headers:new Headers({
-                'Origin':'https://PocketDocOnly.com',
-                'Content-Type':'application/json'
-            }),
-            body:updateData
-        })
-        .then(res=>res.json())
-        .then(response=>{
-            if(!response.status){
-                console.log("redux userError");
-                dispatch(doctorError(response.message));
-                reject(response.message);
-            }
-            else{
-                console.log("redux userUpdated");
-                dispatch(doctorAdd(response.data));
-                resolve();
-            }
-        })
-        .catch(err=>{
-            console.log(err);
-            dispatch(doctorError(err));
-            reject(err);
-        })
+
+    return new Promise((resolve, reject) => {
+
+        firestore().collection('doctors').doc(uid).update(updateData)
+            .then(() => {
+                firestore().collection('doctors').doc(uid).get()
+                    .then(doctor => {
+                        if (doctor.exists) {
+                            console.log("redux userUpdated");
+                            dispatch(doctorAdd(doctor.data()));
+                            resolve();
+                        }
+                        else {
+                            dispatch(doctorError("doctor does not exists"));
+                            reject({ err: "doctor does not exists", status: true });
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        dispatch(doctorError(err))
+                        reject(err)
+                    })
+            })
+            .catch(err => {
+                console.log(err);
+                dispatch(doctorError(err));
+                reject(err);
+            })
+
+        // fetch(URL + `/doctors/${uid}`, {
+        //     method: "PUT",
+        //     headers: new Headers({
+        //         'Origin': 'https://PocketDocOnly.com',
+        //         'Content-Type': 'application/json'
+        //     }),
+        //     body: updateData
+        // })
+        //     .then(res => res.json())
+        //     .then(response => {
+        //         if (!response.status) {
+        //             console.log("redux userError");
+        //             dispatch(doctorError(response.message));
+        //             reject(response.message);
+        //         }
+        //         else {
+        //             console.log("redux userUpdated");
+        //             dispatch(doctorAdd(response.data));
+        //             resolve();
+        //         }
+        //     })
+        //     .catch(err => {
+        //         console.log(err);
+        //         dispatch(doctorError(err));
+        //         reject(err);
+        //     })
     })
 }
 
-const doctorLoading=()=>({
-    type:ActionTypes.LOADING_DOCTOR
+const doctorLoading = () => ({
+    type: ActionTypes.LOADING_DOCTOR
 })
 
-const doctorAdd=(doctorData)=>({
-    type:ActionTypes.ADD_DOCTOR,
-    payload:doctorData
+const doctorAdd = (doctorData) => ({
+    type: ActionTypes.ADD_DOCTOR,
+    payload: doctorData
 })
 
-const doctorError=(err)=>({
-    type:ActionTypes.ERROR_DOCTOR,
-    payload:err
+const doctorError = (err) => ({
+    type: ActionTypes.ERROR_DOCTOR,
+    payload: err
+})
+
+export const addAppointments=(appoinmentsList)=>({
+    type:ActionTypes.ADD_APPOINTMENTS,
+    payload:appoinmentsList
 })
 
 //Chats

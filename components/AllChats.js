@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react';
+import React,{useState,useEffect,useCallback} from 'react';
 import {View,Text,StatusBar, BackHandler, ToastAndroid,StyleSheet,TouchableOpacity} from 'react-native';
 import {Avatar, Button, Headline, Paragraph, RadioButton, Subheading,TextInput, Title,Searchbar, Badge} from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
@@ -37,9 +37,10 @@ function AllChats(props){
 
      //lifecycle
 
-    useFocusEffect(()=>{
+    useFocusEffect(
+        useCallback(()=>{
         StatusBar.setBackgroundColor('#fff');
-    })
+    },[]))
 
      useEffect(()=>{
         setFilteredData(
