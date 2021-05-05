@@ -61,15 +61,15 @@ export default function SignUp(props){
         utility.checkNetwork()
         .then(()=>{
             auth()
-            .createUserWithEmailAndPassword(email,password)
+            .createUserWithEmailAndPassword(email.trim(),password)
             .then((user) => {
                 
                 user.user.updateProfile({
-                    displayName:"Dr. "+name,
+                    displayName:"Dr. "+name.trim(),
                     photoURL:"doctor"
                 })
                 .then(user=>{
-                    signUpConnectyCube(auth().currentUser.uid,name);
+                    signUpConnectyCube(auth().currentUser.uid,name.trim());
                     setLoading(false);
                     global.doctorAuthData=auth().currentUser;
                     props.navigation.navigate("emailVerification");
@@ -106,7 +106,7 @@ export default function SignUp(props){
         const userProfile = {
             login: userId,
             password: "123456789",
-            full_name: name,
+            full_name: name.trim(),
         };
         ConnectyCube.createSession()
             .then(session => {

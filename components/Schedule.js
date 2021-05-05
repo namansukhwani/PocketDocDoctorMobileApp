@@ -12,58 +12,7 @@ import moment from 'moment';
 import LottieView from 'lottie-react-native';
 import firestore from '@react-native-firebase/firestore';
 import Spinner from 'react-native-spinkit';
-
-const dataSchedule = [
-    {
-        name: "Janhavi Thakur",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/21/2020 11:00 AM"),
-        gender: 'F/20'
-    },
-    {
-        name: "Manas Satpute",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("11/21/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Anurag Sirothiya",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("12/13/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Nidan Tegar",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/29/2020 11:00 AM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Rajdeep Kamat",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("11/24/2020 02:00 PM"),
-        gender: 'M/20'
-    },
-    {
-        name: "Anurag Sirothiya",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date(),
-        gender: 'M/20'
-    },
-    {
-        name: "Nidan Tegar",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date(),
-        gender: 'M/20'
-    },
-]
+import { EventRegister } from 'react-native-event-listeners';
 
 //redux
 const mapStateToProps = state => {
@@ -92,6 +41,11 @@ function Schedule(props) {
     )
 
     useEffect(() => {
+
+        const logout=EventRegister.addEventListener('logout',()=>{
+            unsbscribeSheduledAppointments();
+        })
+
         // setData();
         const unsbscribeSheduledAppointments = firestore().collection('appointments')
             .where('doctorId', '==', auth().currentUser.uid)
@@ -120,6 +74,7 @@ function Schedule(props) {
 
         return () => {
             unsbscribeSheduledAppointments();
+            EventRegister.removeEventListener(logout);
         }
     }, [])
 

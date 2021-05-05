@@ -25,6 +25,7 @@ import AppointmentsCurrent from './AppointmentsCurrent';
 import AppointmentsPrevious from './AppointmentsPrevious';
 import VideoCall from './VideoCall';
 import AppointmentDetailedView from './AppointmentDetailedView';
+import { EventRegister } from 'react-native-event-listeners';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -95,10 +96,11 @@ function BottomDrawer(props) {
             <Tab.Screen
                 name="userHome"
                 component={Home}
-                options={{
+                options={({ route, navigation }) => ({
                     tabBarLabel: 'Home',
-                    tabBarIcon: ({ color, size }) => <AntIcon name="home" color={color} size={size} />
-                }}
+                    tabBarIcon: ({ color, size }) => <AntIcon name="home" color={color} size={size} />,
+                    // tabBarBadge:1
+                })}
             />
             <Tab.Screen
                 name="Appointments"
@@ -179,7 +181,7 @@ export default function Main() {
                                                 {
                                                     text: "Cancel", style: "cancel"
                                                 },
-                                                { text: "GO BACK", onPress: () => { auth().signOut().then(() => console.log("singed out")).catch(err => console.log(err)); navigation.goBack() } }
+                                                { text: "GO BACK", onPress: () => { EventRegister.emit('logout'); auth().signOut().then(() => console.log("singed out")).catch(err => console.log(err)); navigation.goBack() } }
                                             ],
                                             { cancelable: false });
                                         //ToastAndroid.show("You can verify your mail anytime.")

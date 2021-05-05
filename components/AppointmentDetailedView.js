@@ -1,10 +1,11 @@
 import React,{useState} from 'react';
 import { View, StyleSheet, StatusBar, ScrollView, Text, Image,ToastAndroid,Linking} from 'react-native';
-import { Paragraph, IconButton, Subheading, Button } from 'react-native-paper';
+import { Paragraph, IconButton, Subheading, Button, Caption } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import FontAws5 from 'react-native-vector-icons/FontAwesome5';
 
 function AppointmentDetailedView(props) {
     // const data = props.route.params.data;
@@ -172,6 +173,18 @@ function AppointmentDetailedView(props) {
             })
     }
 
+    const markAppointmentComplete=()=>{
+        firestore().collection('appointments').doc(data.id).update({ status: "completed" })
+        .then(()=>{
+            updateAppointmentData();
+            ToastAndroid.show("Appointment marked as completed.",ToastAndroid.LONG)
+
+        })
+        .catch(err=>{console.log(err)
+            ToastAndroid.show("Unable to update appointment.",ToastAndroid.LONG)
+        })
+    }
+
     return (
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
             <StatusBar backgroundColor={getColors().backgroundColor} barStyle='dark-content' showHideTransition={true}  />
@@ -231,13 +244,32 @@ function AppointmentDetailedView(props) {
 
                     <Subheading style={{ fontWeight: "bold", marginTop: 8, marginBottom: 4 }}>Appointment Mode</Subheading>
                     <Paragraph style={{ fontSize: 18, textTransform: 'capitalize', fontWeight: 'bold', color: getColors().backgroundColor, backgroundColor: getColors().lightColor, alignSelf: "flex-start", paddingHorizontal: 20, paddingVertical: 5, borderRadius: 15 }}>{data.type}</Paragraph>
+                    <View style={{backgroundColor:getColors().lightColor,height:1,marginTop:10}}/>
+                    <View style={{flexDirection:"row",justifyContent:"flex-start",alignItems:"center",marginTop:10}}>
+                        <IconButton
+                            icon="plus-thick"
+                            size={40}
+                            style={{ backgroundColor: getColors().lightColor, elevation: 2,alignSelf:"center" }}
+                            onPress={() => {}}
+                            color={getColors().backgroundColor}
+                        />
+                        <View style={{justifyContent:"flex-start",alignItems:"flex-start",marginLeft:10,alignSelf:"center"}}>
+                            <View style={{flexDirection:"row",justifyContent:"center",alignItems:"flex-start"}}>
+                                <Subheading style={{fontSize:24,fontWeight:'bold'}}>Prescription</Subheading>
+                                <FontAws5 name="file-medical" size={25} style={{marginLeft:5,color:"#000"}} />
+                            </View>
+                            <Caption>Click to add a new prescription for the patient.</Caption>
+                        </View>
+                    </View>
+                    
+                    <View style={{flex:1,height:75}}/>
                 </Animatable.View>
             </ScrollView>
             {data.status === "completed" ?
                 null
                 :
                 <View style={{...styles.buttons,backgroundColor:getColors().lightColor}}>
-                    {data.status === "accepted" && <Button mode="contained" style={{ flex: 1, borderRadius: 15 }} contentStyle={{ height: 48 }} color="#147EFB" onPress={() => { }}>Mark as Complete</Button>}
+                    {data.status === "accepted" && <Button mode="contained" style={{ flex: 1, borderRadius: 15 }} contentStyle={{ height: 48 }} color="#147EFB" onPress={() => {markAppointmentComplete() }}>Mark as Complete</Button>}
                     {data.status === "pending" &&
                         <>
                             <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, marginRight:10, borderRadius: 20, elevation: 2 }} labelStyle={{ fontWeight: 'bold', color: "#fff" }} contentStyle={{ height: 45 }} onPress={() => { acceptAppointment(data) }} theme={{ colors: { primary: getColors().backgroundColor } }}>accept</Button>

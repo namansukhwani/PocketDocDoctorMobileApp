@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 import { connect } from 'react-redux';
 import { Utility } from '../utility/utility';
 import { } from '../redux/ActionCreators';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect,useNavigation} from '@react-navigation/native';
 import { HomeHeader } from '../utility/ViewUtility';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
@@ -30,6 +30,7 @@ const mapDispatchToProps = (dispatch) => ({
 })
 
 function Home(props) {
+    const navigaition = useNavigation()
 
     //refs
     const animatedView1 = useRef(0);
@@ -42,10 +43,27 @@ function Home(props) {
     const [newAppointmentsData, setnewAppointmentsData] = useState([])
     const [isTodayAppointmentsLoading, setisTodayAppointmentsLoading] = useState(true)
     const [appointmentsTodayData, setappointmentsTodayData] = useState([])
+    // const [lengthNewAppointments, setlengthNewAppointments] = useState(0)
+    // const [isScreenFocused, setisScreenFocused] = useState(true)
 
     //lifecycle
     useEffect(() => {
         setUpCallListeners();
+
+        const logout=EventRegister.addEventListener('logout',()=>{
+            unsbscribeNewAppintments();
+            unsbscribeSheduledAppointments();
+        })
+
+        // const blurEvent=navigaition.addListener('blur',()=>{
+        //     setisScreenFocused(false)
+        //     console.log("blur event");
+        //     console.log(isScreenFocused);
+        // })
+
+
+        const dayEnd = new Date()
+        dayEnd.setHours(23, 59, 59, 999)
 
         const unsbscribeNewAppintments = firestore().collection('appointments')
             .where('doctorId', '==', auth().currentUser.uid)
@@ -65,7 +83,21 @@ function Home(props) {
                         setnewAppointmentsData(list.length <= 6 ? list : list.slice(0, 6));
                         if (isNewAppointmentsLoading) {
                             setisNewAppointmentsLoading(false)
+                            // setlengthNewAppointments(list.length)
                         }
+                        // else {
+                        //     console.log("reached before if");
+                        //     if (lengthNewAppointments < list.length) {
+                        //         console.log("Inside if");
+                        //         navigaition.setOptions({ tabBarBadge: list.length - lengthNewAppointments })
+                        //         setlengthNewAppointments(list.length)
+                        //     }
+                        //     else {
+                        //         setlengthNewAppointments(list.length)
+
+                        //     }
+
+                        // }
                     })
                     .catch(err => {
                         console.log(err);
@@ -77,6 +109,7 @@ function Home(props) {
         const unsbscribeSheduledAppointments = firestore().collection('appointments')
             .where('doctorId', '==', auth().currentUser.uid)
             .where('time', '>=', firestore.Timestamp.now())
+            .where('time', '<=', firestore.Timestamp.fromDate(dayEnd))
             .where('status', '==', 'accepted')
             .orderBy('time', 'asc')
             .limit(4)
@@ -101,6 +134,7 @@ function Home(props) {
             })
 
         return () => {
+            EventRegister.removeEventListener(logout);
             unsbscribeNewAppintments();
             unsbscribeSheduledAppointments();
         }
@@ -108,6 +142,10 @@ function Home(props) {
 
     useFocusEffect(
         useCallback(() => {
+            // console.log("focus Event");
+            // console.log(isScreenFocused);
+            // setisScreenFocused(true)
+            // navigaition.setOptions({ tabBarBadge: null })
             StatusBar.setBackgroundColor('#fff');
             animatedView1.current.slideInRight(500);
             animatedView2.current.slideInUp(500);
@@ -122,6 +160,7 @@ function Home(props) {
                 backhandler.remove();
             }
         }, [])
+
     );
 
     //methods
@@ -130,89 +169,89 @@ function Home(props) {
             .then(() => {
                 if (appointment.type == "online") {
                     firestore().collection('chatRooms')
-                    .where('doctorId','==',auth().currentUser.uid)
-                    .where('userId','==',appointment.userId)
-                    .get()
-                    .then(data=>{
-                        if(data.size===1){
-                            const chatRoom=data.docs.map(room=>{
-                                return room.data();
-                            })
+                        .where('doctorId', '==', auth().currentUser.uid)
+                        .where('userId', '==', appointment.userId)
+                        .get()
+                        .then(data => {
+                            if (data.size === 1) {
+                                const chatRoom = data.docs.map(room => {
+                                    return room.data();
+                                })
 
-                            const messsData={
-                                body:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
-                                createdDate:firestore.Timestamp.now(),
-                                mediaUrl:'',
-                                senderId:auth().currentUser.uid,
-                                status:false,
-                                type:'text'
-                            }
-                            firestore().collection('chatRooms').doc(chatRoom[0].roomId).collection('messages').add(messsData)
-                            .then(()=>{
+                                const messsData = {
+                                    body: `Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                    createdDate: firestore.Timestamp.now(),
+                                    mediaUrl: '',
+                                    senderId: auth().currentUser.uid,
+                                    status: false,
+                                    type: 'text'
+                                }
+                                firestore().collection('chatRooms').doc(chatRoom[0].roomId).collection('messages').add(messsData)
+                                    .then(() => {
 
-                            })
-                            .catch(err=>console.log(err))
+                                    })
+                                    .catch(err => console.log(err))
 
-                            const updatData={
-                                appointmentDate:appointment.time,
-                                lastMessage:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
-                                doctorMessageCount:chatRoom[0].doctorMessageCount+1,
-                                lastUpdatedDate:firestore.Timestamp.now()
-                            }
+                                const updatData = {
+                                    appointmentDate: appointment.time,
+                                    lastMessage: `Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                    doctorMessageCount: chatRoom[0].doctorMessageCount + 1,
+                                    lastUpdatedDate: firestore.Timestamp.now()
+                                }
 
-                            firestore().collection('chatRooms').doc(chatRoom[0].roomId).update(updatData)
-                            .then(()=>{
-                                ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
-                            })
-                            .catch(err=>{
-                                console.log(err);
-                            })
-                        }
-                        else{
-                            const chatRoomData = {
-                                appointmentDate:appointment.time,
-                                createdDate:firestore.Timestamp.now(),
-                                lastUpdatedDate:firestore.Timestamp.now(),
-                                doctorId:auth().currentUser.uid,
-                                doctorName:props.doctor.doctor.name,
-                                doctorProfilePicUrl:props.doctor.doctor.profilePictureUrl,
-                                doctorMessageCount:1,
-                                userId:appointment.userId,
-                                userMessageCount:0,
-                                userName:appointment.userData.name,
-                                userProfilePicUrl:appointment.userData.profilePictureUrl,
-                                lastMessage:`Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
-                                roomId:'',
-                            }
-
-                            firestore().collection('chatRooms').add(chatRoomData)
-                            .then(values=>{
-                                firestore().collection('chatRooms').doc(values.id).update({roomId:values.id})
-                                .then(()=>{
-                                    const messData={
-                                        body:chatRoomData.lastMessage,
-                                        createdDate:firestore.Timestamp.now(),
-                                        mediaUrl:'',
-                                        senderId:auth().currentUser.uid,
-                                        status:false,
-                                        type:'text'
-                                    }
-                                    firestore().collection('chatRooms').doc(values.id).collection('messages').add(messData)
-                                    .then(mess=>{
+                                firestore().collection('chatRooms').doc(chatRoom[0].roomId).update(updatData)
+                                    .then(() => {
                                         ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
                                     })
-                                    .catch(err=>{
+                                    .catch(err => {
                                         console.log(err);
                                     })
-                                })
-                                .catch(err=>{
-                                    console.log(err);
-                                })
-                            })
-                        }
-                    })
+                            }
+                            else {
+                                const chatRoomData = {
+                                    appointmentDate: appointment.time,
+                                    createdDate: firestore.Timestamp.now(),
+                                    lastUpdatedDate: firestore.Timestamp.now(),
+                                    doctorId: auth().currentUser.uid,
+                                    doctorName: props.doctor.doctor.name,
+                                    doctorProfilePicUrl: props.doctor.doctor.profilePictureUrl,
+                                    doctorMessageCount: 1,
+                                    userId: appointment.userId,
+                                    userMessageCount: 0,
+                                    userName: appointment.userData.name,
+                                    userProfilePicUrl: appointment.userData.profilePictureUrl,
+                                    lastMessage: `Your appointment with ${props.doctor.doctor.name} is confirmed for ${moment(appointment.time.toDate()).format("DD/MM/YYYY hh:mm a")}. `,
+                                    roomId: '',
+                                }
 
-                   
+                                firestore().collection('chatRooms').add(chatRoomData)
+                                    .then(values => {
+                                        firestore().collection('chatRooms').doc(values.id).update({ roomId: values.id })
+                                            .then(() => {
+                                                const messData = {
+                                                    body: chatRoomData.lastMessage,
+                                                    createdDate: firestore.Timestamp.now(),
+                                                    mediaUrl: '',
+                                                    senderId: auth().currentUser.uid,
+                                                    status: false,
+                                                    type: 'text'
+                                                }
+                                                firestore().collection('chatRooms').doc(values.id).collection('messages').add(messData)
+                                                    .then(mess => {
+                                                        ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
+                                                    })
+                                                    .catch(err => {
+                                                        console.log(err);
+                                                    })
+                                            })
+                                            .catch(err => {
+                                                console.log(err);
+                                            })
+                                    })
+                            }
+                        })
+
+
                 }
                 else {
                     ToastAndroid.show(`Appointment accepted.`, ToastAndroid.SHORT)
@@ -323,7 +362,7 @@ function Home(props) {
                         </View>
                     </Card.Content>
                     <View style={styles.footer}>
-                        <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, margin: 10, borderRadius: 20,elevation:2 }} labelStyle={{fontWeight:'bold',color:"#fff"}} contentStyle={{height:45}} onPress={() => { acceptAppointment(item) }} theme={{ colors: { primary: '#147efb' } }}>accept</Button>
+                        <Button mode='contained' style={{ alignSelf: 'center', flex: 1.7, margin: 10, borderRadius: 20, elevation: 2 }} labelStyle={{ fontWeight: 'bold', color: "#fff" }} contentStyle={{ height: 45 }} onPress={() => { acceptAppointment(item) }} theme={{ colors: { primary: '#147efb' } }}>accept</Button>
                         <Button mode='outlined' style={{ alignSelf: 'center', flex: 1, margin: 10, borderRadius: 15 }} onPress={() => { declineAppointment(item.id) }} theme={{ colors: { primary: '#FC3D39' } }}>decline</Button>
                     </View>
                 </Card>
@@ -470,7 +509,7 @@ const styles = StyleSheet.create({
         // borderLeftWidth: 0.3,
         // borderTopWidth: 0.3,
         // borderColor: '#b6b6b6',
-        elevation:2,
+        elevation: 2,
     },
     footer: {
         width: '100%',
@@ -483,7 +522,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 10,
         flexDirection: "row",
         justifyContent: 'center',
-        elevation:2
+        elevation: 2
     }
 })
 

@@ -153,7 +153,7 @@ function Login(props){
         utility.checkNetwork()
         .then(()=>{
             auth()
-            .signInWithEmailAndPassword(email,password)
+            .signInWithEmailAndPassword(email.trim(),password)
             .then((user) => {
                 global.doctorAuthData=user.user;
                 console.log('User account signed in!');

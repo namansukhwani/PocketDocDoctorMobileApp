@@ -13,6 +13,7 @@ import * as Animatable from 'react-native-animatable';
 import firestore from '@react-native-firebase/firestore';
 import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Spinner from 'react-native-spinkit';
+import { EventRegister } from 'react-native-event-listeners';
 
 const todayDate=new Date();
 
@@ -52,6 +53,11 @@ function AllChats(props){
 
      useEffect(()=>{
         
+        
+        const logout=EventRegister.addEventListener('logout',()=>{
+            unsubscribe();
+        })
+
         const unsubscribe=firestore().collection("chatRooms")
         .where('doctorId','==',auth().currentUser.uid)
         .orderBy('lastUpdatedDate','desc')
@@ -68,7 +74,10 @@ function AllChats(props){
             //console.log("Changes happened");
         }) 
 
-        return ()=>unsubscribe();
+        return ()=>{
+            unsubscribe();
+            EventRegister.removeEventListener(logout);
+        }
     },[]);
 
     //methods
