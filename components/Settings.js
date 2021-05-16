@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StatusBar, BackHandler, ToastAndroid, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StatusBar, BackHandler, ToastAndroid, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Avatar, Button, Headline, Paragraph, List, Title, Switch, Subheading, Caption, Dialog, Portal, Checkbox } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import { connect } from 'react-redux';
 import { Utility } from '../utility/utility';
-import { } from '../redux/ActionCreators';
+import { updateDoctorDetails } from '../redux/ActionCreators';
 import { useFocusEffect, StackActions } from '@react-navigation/native';
 import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
@@ -12,6 +12,8 @@ import LottieView from 'lottie-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import { EventRegister } from 'react-native-event-listeners';
+import firestore from '@react-native-firebase/firestore';
+import { Modalize } from 'react-native-modalize';
 
 //redux
 const mapStateToProps = state => {
@@ -21,7 +23,7 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = (dispatch) => ({
-
+    updateDoctorDetails: (uid, updateData) => dispatch(updateDoctorDetails(uid, updateData))
 })
 
 const allDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -31,20 +33,20 @@ function Settings(props) {
 
     //refs
     const animatedView = useRef(0);
+    const giveReviewModal = useRef(null);
+
 
     //states
-    const [switchButton, setSwitchButton] = useState(true);
     const [fromTime, setFromTime] = useState(new Date("11/20/2020 11:00 AM"));
     const [toTime, setToTime] = useState(new Date("11/20/2020 05:00 PM"));
-    const [days, setDays] = useState([1, 2, 3, 4, 5]);
     const [showDaysSelection, setShowDaysSelection] = useState(false);
-    const [sunday, setsunday] = useState(days.includes(0));
-    const [monday, setmonday] = useState(days.includes(1));
-    const [tue, settue] = useState(days.includes(2));
-    const [wed, setwed] = useState(days.includes(3));
-    const [thu, setthu] = useState(days.includes(4));
-    const [fri, setfri] = useState(days.includes(5));
-    const [sat, setsat] = useState(days.includes(6));
+    const [sunday, setsunday] = useState(props.doctor.doctor.schedule.days.includes(0));
+    const [monday, setmonday] = useState(props.doctor.doctor.schedule.days.includes(1));
+    const [tue, settue] = useState(props.doctor.doctor.schedule.days.includes(2));
+    const [wed, setwed] = useState(props.doctor.doctor.schedule.days.includes(3));
+    const [thu, setthu] = useState(props.doctor.doctor.schedule.days.includes(4));
+    const [fri, setfri] = useState(props.doctor.doctor.schedule.days.includes(5));
+    const [sat, setsat] = useState(props.doctor.doctor.schedule.days.includes(6));
     const [showFromTime, setShowFromTime] = useState(false);
     const [showToTime, setShowToTime] = useState(false);
 
@@ -84,8 +86,76 @@ function Settings(props) {
             newDays.push(6);
         }
 
-        setDays(newDays);
+        // console.log(newDays);
+        changeAvailablityDays(newDays);
         setShowDaysSelection(false);
+
+    }
+
+    const changeStatus = () => {
+        props.updateDoctorDetails(auth().currentUser.uid, { status: !props.doctor.doctor.status })
+            .catch(err => ToastAndroid.show("Unable to change status ", ToastAndroid.LONG))
+    }
+
+    const changeAvailablityDays = (newDays) => {
+        if (props.doctor.doctor.schedule.days.length === newDays.length) {
+            return
+        }
+        else {
+            const updateData = {
+                schedule: {
+                    days: newDays,
+                    maxAppointmentsPerSlot: props.doctor.doctor.schedule.maxAppointmentsPerSlot,
+                    slots: props.doctor.doctor.schedule.slots
+                }
+            }
+
+            props.updateDoctorDetails(auth().currentUser.uid, updateData)
+                .catch(err => ToastAndroid.show("Unable to change availabllity days ", ToastAndroid.LONG))
+        }
+    }
+
+    const removeSlot = (index) => {
+        if (props.doctor.doctor.schedule.slots.length <= 1) {
+            ToastAndroid.show("Cant remove this slot there should aleast be a one slot.", ToastAndroid.LONG)
+            return
+        }
+        else {
+            var tempList = props.doctor.doctor.schedule.slots
+            tempList.splice(index, 1)
+
+            const updateData = {
+                schedule: {
+                    days: props.doctor.doctor.schedule.days,
+                    maxAppointmentsPerSlot: props.doctor.doctor.schedule.maxAppointmentsPerSlot,
+                    slots: tempList
+                }
+            }
+
+            props.updateDoctorDetails(auth().currentUser.uid, updateData)
+                .catch(err => { console.log(err); ToastAndroid.show("Unable to change slots ", ToastAndroid.LONG) })
+
+        }
+
+    }
+
+    const addSlot = () => {
+        var tempList = props.doctor.doctor.schedule.slots
+        tempList.push({
+            start: firestore.Timestamp.fromDate(fromTime),
+            end: firestore.Timestamp.fromDate(toTime)
+        })
+
+        const updateData = {
+            schedule: {
+                days: props.doctor.doctor.schedule.days,
+                maxAppointmentsPerSlot: props.doctor.doctor.schedule.maxAppointmentsPerSlot,
+                slots: tempList
+            }
+        }
+
+        props.updateDoctorDetails(auth().currentUser.uid, updateData).then(() => giveReviewModal.current.close())
+            .catch(err => { console.log(err); ToastAndroid.show("Unable to change slots ", ToastAndroid.LONG) })
 
     }
 
@@ -129,30 +199,50 @@ function Settings(props) {
                                     right={() =>
                                         <>
                                             <View style={{ flexDirection: "row", justifyContent: 'center', marginRight: 10 }}>
-                                                <Paragraph style={{ fontWeight: "bold", textTransform: "uppercase", color: (switchButton ? "#53d769" : '#FC3D39'), alignSelf: "center", marginRight: 10 }}>{switchButton ? "ACTIVE" : "INACTIVE"}</Paragraph>
+                                                <Paragraph style={{ fontWeight: "bold", textTransform: "uppercase", color: (props.doctor.doctor.status ? "#53d769" : '#FC3D39'), alignSelf: "center", marginRight: 10 }}>{props.doctor.doctor.status ? "ACTIVE" : "INACTIVE"}</Paragraph>
                                                 <Switch
-                                                    value={switchButton}
-                                                    onValueChange={() => setSwitchButton(!switchButton)}
+                                                    value={props.doctor.doctor.status}
+                                                    onValueChange={() => changeStatus()}
                                                     color="#147efb"
                                                 />
                                             </View>
                                         </>
                                     }
-                                    left={() => <List.Icon icon="circle-slice-8" color={switchButton ? "#53d769" : '#FC3D39'} />}
+                                    left={() => <List.Icon icon="circle-slice-8" color={props.doctor.doctor.status ? "#53d769" : '#FC3D39'} />}
                                 />
-                                <List.Subheader style={{ paddingHorizontal: 0 }}>Availability Time</List.Subheader>
-                                <View style={{ flexDirection: "row", justifyContent: "center" }}>
-                                    <TouchableOpacity onPress={() => setShowFromTime(true)} style={{ ...styles.timeButton, marginRight: 10 }}>
-                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold', color: "#147efb" }}>From: </Subheading>{moment(fromTime).format("hh:mm a")}</Subheading>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setShowToTime(true)} style={styles.timeButton}>
-                                        <Subheading style={{ alignSelf: "center" }} ><Subheading style={{ fontWeight: 'bold', color: "#147efb" }}>To: </Subheading>{moment(toTime).format("hh:mm a")}</Subheading>
-                                    </TouchableOpacity>
-                                </View>
+                                <List.Subheader style={{ paddingHorizontal: 0 }}>Availability Slots</List.Subheader>
+                                <Caption>Click the slots below to remove them.</Caption>
+                                {props.doctor.doctor.schedule.slots.map((slot, index) => {
+                                    // console.log(index);
+                                    return (
+                                        <TouchableOpacity
+                                            key={index.toString()}
+                                            style={styles.slot}
+                                            onPress={() => {
+                                                Alert.alert(
+                                                    "Remove",
+                                                    `Are you sure you want to remove ${moment(slot.start.toDate()).format('hh:mm a') + " - " + moment(slot.end.toDate()).format('hh:mm a')} slot.`,
+                                                    [
+                                                        {
+                                                            text: "Cancel", style: "cancel"
+                                                        },
+                                                        { text: "OK", onPress: () => { removeSlot(index) } }
+                                                    ],
+                                                    { cancelable: false });
+                                            }}
+                                        >
+                                            <Text style={{ color: "#147efb", fontWeight: 'bold', fontSize: 16 }}>{moment(slot.start.toDate()).format('hh:mm a') + " - " + moment(slot.end.toDate()).format('hh:mm a')}</Text>
+                                        </TouchableOpacity>
+                                    )
+                                })
+
+                                }
+                                <Button mode="outlined" style={{ marginTop: 10, borderRadius: 15, borderColor: "#147efb" }} icon="plus" contentStyle={{ height: 40 }} color="#147efb" labelStyle={{ color: '#147efb', fontWeight: "bold" }} onPress={() => { giveReviewModal.current.open() }}>Add new slot</Button>
+
                                 <List.Subheader style={{ paddingHorizontal: 0, paddingBottom: 0 }}>Availability Days</List.Subheader>
                                 <Caption>Click below to change the Availability Days</Caption>
                                 <TouchableOpacity style={styles.days} onPress={() => setShowDaysSelection(true)}>
-                                    {days.map(dayNo => {
+                                    {props.doctor.doctor.schedule.days.map(dayNo => {
 
                                         return (
                                             <View key={dayNo.toString()} style={{ flex: 1, justifyContent: 'center', padding: 10, }}>
@@ -163,33 +253,34 @@ function Settings(props) {
                                 </TouchableOpacity>
                                 <List.Subheader style={{ paddingHorizontal: 0 }}>ACCOUNT SETTINGS</List.Subheader>
                                 <List.Item
-                                    onPress={() => { }}
+                                    onPress={() => { props.navigation.navigate("EditProfile") }}
                                     style={styles.listItem}
                                     title="Edit Profile"
                                     right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
                                     left={() => <List.Icon icon="account" color="#147efb" />}
                                 />
                                 <List.Item
-                                    onPress={() => { }}
+                                    onPress={() => { props.navigation.navigate("EditProfesionalProfile") }}
+                                    style={styles.listItem}
+                                    title="Edit Professional Info"
+                                    right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
+                                    left={() => <List.Icon icon="medical-bag" color="#147efb" />}
+                                />
+                                <List.Item
+                                    onPress={() => { props.navigation.navigate('ChangePassword') }}
                                     style={styles.listItem}
                                     title="Change Password"
                                     right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
                                     left={() => <List.Icon icon="lock-open-check" color="#147efb" />}
                                 />
                                 <List.Item
-                                    onPress={() => { }}
+                                    onPress={() => { props.navigation.navigate("ChangeEmail") }}
                                     style={styles.listItem}
                                     title="Change Email"
                                     right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
                                     left={() => <List.Icon icon="at" color="#147efb" />}
                                 />
-                                <List.Item
-                                    onPress={() => { }}
-                                    style={styles.listItem}
-                                    title="Appointments Settings"
-                                    right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
-                                    left={() => <List.Icon icon="medical-bag" color="#147efb" />}
-                                />
+
                                 <List.Item
                                     onPress={() => { }}
                                     style={styles.listItem}
@@ -208,7 +299,7 @@ function Settings(props) {
                                 onPress={() => {
                                     EventRegister.emit('logout');
                                     auth().signOut();
-                                    props.navigation.dispatch(StackActions.popToTop()); 
+                                    props.navigation.dispatch(StackActions.popToTop());
                                 }}
                             >
                                 logout
@@ -323,6 +414,30 @@ function Settings(props) {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
+
+            <Modalize
+                ref={giveReviewModal}
+                adjustToContentHeight={true}
+                modalStyle={styles.modal}
+                handleStyle={{ backgroundColor: '#147efb' }}
+                rootStyle={{ elevation: 10 }}
+                onClose={() => {
+
+                }}
+            >
+                <Subheading style={{ fontWeight: "bold", marginTop: 8 }}>Starting Time</Subheading>
+                <Caption>Click to select starting time for new slot</Caption>
+                <Button onPress={() => setShowFromTime(true)} mode="contained" theme={{ colors: { primary: '#e3f2fd' } }} style={{ borderRadius: 15, marginTop: 5, marginBottom: 15, elevation: 5 }} contentStyle={{ height: 48 }} labelStyle={{ fontWeight: 'bold', color: '#147efb' }}>{`From: ${moment(fromTime).format("hh:mm a")}`}</Button>
+
+                <Subheading style={{ fontWeight: "bold", marginTop: 8 }}>Ending Time</Subheading>
+                <Caption>Click to select ending time for new slot</Caption>
+                <Button onPress={() => { setShowToTime(true) }} mode="contained" theme={{ colors: { primary: '#e3f2fd' } }} style={{ borderRadius: 15, marginTop: 5, marginBottom: 15, elevation: 5 }} contentStyle={{ height: 48 }} labelStyle={{ fontWeight: 'bold', color: '#147efb' }}>{`To: ${moment(toTime).format("hh:mm a")}`}</Button>
+
+                <View style={{ marginBottom: 15, marginTop: 20, flexDirection: "row", justifyContent: "flex-start", alignItems: "center" }}>
+                    <Button mode="outlined" theme={{ colors: { primary: 'red' } }} style={{ flex: 1, borderRadius: 15, marginRight: 5 }} contentStyle={{ height: 40 }} labelStyle={{ fontWeight: 'bold' }} onPress={() => giveReviewModal.current.close()}>cancel</Button>
+                    <Button mode="contained" theme={{ colors: { primary: '#147efb' } }} style={{ flex: 1, borderRadius: 15, marginLeft: 5 }} contentStyle={{ height: 40 }} labelStyle={{ fontWeight: 'bold' }} onPress={addSlot}>ok</Button>
+                </View>
+            </Modalize>
         </>
     )
 }
@@ -365,6 +480,26 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         // borderWidth: 1,
         borderColor: '#b6b6b6'
+    },
+    slot: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        backgroundColor: "#e3f2fd",
+        borderRadius: 10,
+        margin: 5,
+        display: 'flex',
+        justifyContent: "center",
+        alignItems: 'center',
+        // borderColor: '#147efb',
+        // borderWidth: 1,
+        elevation: 1
+    },
+    modal: {
+        backgroundColor: '#fff',
+        borderTopRightRadius: 30,
+        borderTopLeftRadius: 30,
+        padding: 15,
+        paddingTop: 20
     },
 });
 

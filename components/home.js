@@ -60,7 +60,8 @@ function Home(props) {
         //     console.log("blur event");
         //     console.log(isScreenFocused);
         // })
-
+        const dayStart=new Date()
+        dayStart.setHours(0,0,0,0)
 
         const dayEnd = new Date()
         dayEnd.setHours(23, 59, 59, 999)
@@ -108,7 +109,7 @@ function Home(props) {
 
         const unsbscribeSheduledAppointments = firestore().collection('appointments')
             .where('doctorId', '==', auth().currentUser.uid)
-            .where('time', '>=', firestore.Timestamp.now())
+            .where('time', '>=', firestore.Timestamp.fromDate(dayStart))
             .where('time', '<=', firestore.Timestamp.fromDate(dayEnd))
             .where('status', '==', 'accepted')
             .orderBy('time', 'asc')

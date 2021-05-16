@@ -8,7 +8,7 @@
     "start": "react-native start",
     "android:saveAssets": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
     "android:debugAPK": "cd D:/StudiesIMPORTANT/CollegeMinorProjecet/PocketDocDoctor/android && gradlew assembleDebug",
-    "android:clean": "cd D:/StudiesIMPORTANT/CollegeMinorProjecet/PocketDocDoctor/android && gradlew assembleDebug",
+    "android:clean": "cd D:/StudiesIMPORTANT/CollegeMinorProjecet/PocketDocDoctor/android && gradlew clean",
     "test": "jest",
     "lint": "eslint ."
   },
@@ -19,6 +19,7 @@
     "@react-native-community/hooks": "^2.6.0",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-native-community/netinfo": "^5.9.7",
+    "@react-native-community/slider": "^3.0.3",
     "@react-native-firebase/app": "^10.1.0",
     "@react-native-firebase/auth": "^9.3.1",
     "@react-native-firebase/firestore": "^7.10.3",

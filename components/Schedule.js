@@ -42,14 +42,14 @@ function Schedule(props) {
 
     useEffect(() => {
 
-        const logout=EventRegister.addEventListener('logout',()=>{
+        const logout = EventRegister.addEventListener('logout', () => {
             unsbscribeSheduledAppointments();
         })
 
         // setData();
         const unsbscribeSheduledAppointments = firestore().collection('appointments')
             .where('doctorId', '==', auth().currentUser.uid)
-            // .where('status', '==', 'accepted','completed')
+            .where('status', 'in', ['accepted', 'completed'])
             // .where('status', '==', 'completed')
             .onSnapshot(querySnapshot => {
                 return Promise.all(querySnapshot.docs.map(async appointment => {
@@ -97,15 +97,15 @@ function Schedule(props) {
     const setData = (newData) => {
         var newItems = {}
         newData.forEach(data => {
-            if (data.status === "accepted" || data.status === "completed") {
-                var timeStr = timeToString(data.time.toDate());
-                if (newItems[timeStr]) {
-                    newItems[timeStr].push(data);
-                }
-                else {
-                    newItems[timeStr] = [data];
-                }
+            // if (data.status === "accepted" || data.status === "completed") {
+            var timeStr = timeToString(data.time.toDate());
+            if (newItems[timeStr]) {
+                newItems[timeStr].push(data);
             }
+            else {
+                newItems[timeStr] = [data];
+            }
+            // }
         })
         setschduleData(newItems);
         // console.log("data", newItems);
@@ -116,7 +116,7 @@ function Schedule(props) {
 
         return (
             <Animatable.View animation="slideInRight" style={{}} duration={500} useNativeDriver={true}>
-                <TouchableOpacity onPress={()=>props.navigation.navigate('AppointmentDetailedView', { data: item })} style={styles.appointmentsToday}>
+                <TouchableOpacity onPress={() => props.navigation.navigate('AppointmentDetailedView', { data: item })} style={styles.appointmentsToday}>
                     <Title numberOfLines={1}>{item.userData.name}</Title>
                     <Caption style={{ paddingHorizontal: 0, paddingVertical: 0 }}>{genderAge}</Caption>
                     <Paragraph numberOfLines={1} style={{ overflow: "hidden", width: 210 }}><Paragraph style={{ fontWeight: "bold" }}>issue: </Paragraph >{item.problem}</Paragraph>

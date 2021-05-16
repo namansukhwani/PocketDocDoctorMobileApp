@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, TouchableOpacity, ToastAndroid, StyleSheet, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators, } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 import Login from './login';
@@ -26,6 +26,12 @@ import AppointmentsPrevious from './AppointmentsPrevious';
 import VideoCall from './VideoCall';
 import AppointmentDetailedView from './AppointmentDetailedView';
 import { EventRegister } from 'react-native-event-listeners';
+import ChangePassword from './ChangePassword';
+import EditProfile from './EditProfile';
+import ChangeEmail from './ChangeEmail';
+import EditProfesionalProfile from './EditProfesionalProfile';
+import PrescriptionNewView from './PrescriptionNewAdd';
+import PrescriptionView from './PrescriptionView';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -289,6 +295,93 @@ export default function Main() {
                         ),
                     })}
                     component={AppointmentDetailedView}
+                />
+                <Stack.Screen
+                    name="ChangePassword"
+                    options={({ route, navigation }) => ({
+                        headerTitle: 'Change Password',
+                        headerTitleAlign: 'center',
+                        headerStyle: { elevation: 0, height: 45, },
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-down-outline" size={35} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                        cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS
+                    })}
+                    component={ChangePassword}
+                />
+                <Stack.Screen
+                    name="EditProfile"
+                    options={({ route, navigation }) => ({
+                        headerTitle: 'Edit Profile',
+                        headerTitleAlign: 'center',
+                        headerStyle: { elevation: 0, height: 45, },
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-down-outline" size={35} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                        cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS
+                    })}
+                    component={EditProfile}
+                />
+                <Stack.Screen
+                    name="EditProfesionalProfile"
+                    options={({ route, navigation }) => ({
+                        headerTitle: 'Edit Professional Profile',
+                        headerTitleAlign: 'center',
+                        headerStyle: { elevation: 0, height: 45, },
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-down-outline" size={35} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                        cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS
+                    })}
+                    component={EditProfesionalProfile}
+                />
+                <Stack.Screen
+                    name="ChangeEmail"
+                    options={({ route, navigation }) => ({
+                        headerTitle: 'Change Email',
+                        headerTitleAlign: 'center',
+                        headerStyle: { elevation: 0, height: 45, },
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-down-outline" size={35} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                        cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS
+                    })}
+                    component={ChangeEmail}
+                />
+                <Stack.Screen
+                    name="PrescriptionNewView"
+                    options={({ route, navigation }) => ({
+                        headerTitle: 'Add New Prescription',
+                        headerTitleAlign: 'center',
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-back" size={30} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                    })}
+                    component={PrescriptionNewView}
+                />
+                <Stack.Screen
+                    name="PrescriptionView"
+                    options={({ route, navigation }) => ({
+                        headerTitle: '',
+                        headerTitleAlign: 'center',
+                        headerTransparent: true,
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-back" size={30} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                    })}
+                    component={PrescriptionView}
                 />
             </Stack.Navigator>
         </NavigationContainer>

@@ -2,65 +2,34 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Dimensions, StatusBar, BackHandler, ToastAndroid, StyleSheet, FlatList, Animated } from 'react-native';
 import { Avatar, Button, Headline, Paragraph, RadioButton, FAB, Subheading, TextInput, Title, Card, Caption } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
-import {useFocusEffect} from '@react-navigation/native';
-import {connect} from 'react-redux';
-import {Utility} from '../utility/utility';
-import {} from '../redux/ActionCreators';
+import { useFocusEffect } from '@react-navigation/native';
+import { connect } from 'react-redux';
+import { Utility } from '../utility/utility';
+import { } from '../redux/ActionCreators';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
 //import Animated from 'react-native-reanimated';
 import Fontisto from 'react-native-vector-icons/FontAwesome';
-
-const data = [
-    {
-        name: "Joy Singh",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/21/2020 11:00 AM"),
-        gender: 'M/20',
-        status:"complete"
-    },
-    {
-        name: "Anurag Sirothiya",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("12/13/2020 02:00 PM"),
-        gender: 'M/20',
-        status:"declined"
-    },
-    {
-        name: "Nidan Tegar",
-        issue: "Knee Problem",
-        mode: "online",
-        time: new Date("11/29/2020 11:00 AM"),
-        gender: 'M/20',
-        status:"complete"
-    },
-    {
-        name: "Rajdeep Kamat",
-        issue: "High blood pressure and headache",
-        mode: "offline",
-        time: new Date("11/24/2020 02:00 PM"),
-        gender: 'M/20',
-        status:"complete"
-    },
-]
+import firestore from '@react-native-firebase/firestore';
+import Spinner from 'react-native-spinkit';
+import { EventRegister } from 'react-native-event-listeners';
+import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const height = Dimensions.get('screen').height;
 
 //redux
-const mapStateToProps=state =>{
-    return{
-        doctor:state.doctor
+const mapStateToProps = state => {
+    return {
+        doctor: state.doctor
     };
 };
 
-const mapDispatchToProps=(dispatch) => ({
+const mapDispatchToProps = (dispatch) => ({
 
 })
 
 //component
-function AppointmentsPrevious(props){
+function AppointmentsPrevious(props) {
     //Animated 
     const scrollY = new Animated.Value(0);
     const diffClapScrollY = Animated.diffClamp(scrollY, 0, 100);
@@ -71,21 +40,97 @@ function AppointmentsPrevious(props){
 
     //states
     const todayDate = new Date();
+    const [data, setdata] = useState([])
+    const [dataLoading, setdataLoading] = useState(true)
 
     //lifecycles
+    useEffect(() => {
+
+        const logout = EventRegister.addEventListener('logout', () => {
+            unsbscribePrevious();
+        })
+
+        const dayStart = new Date()
+        dayStart.setHours(0, 0, 0, 0)
+
+        const unsbscribePrevious = firestore().collection('appointments')
+            .where('doctorId', '==', auth().currentUser.uid)
+            .where('time', '<=', firestore.Timestamp.fromDate(dayStart))
+            .orderBy('time', 'desc')
+            .onSnapshot(querySnapshot => {
+                return Promise.all(querySnapshot.docs.map(async appointment => {
+                    return {
+                        ref: appointment.ref,
+                        id: appointment.id,
+                        userData: await getUserData(appointment.data().userId),
+                        ...appointment.data()
+                    }
+                }))
+                    .then(list => {
+                        settelPriviousPendingAppointments(list)
+                        if (dataLoading) {
+                            setdataLoading(false);
+                        }
+                        setdata(list)
+                    })
+                    .catch(err => {
+                        ToastAndroid.show("Unable to fetch previous appointment data.", ToastAndroid.LONG)
+                        console.log(err);
+                    })
+            },
+                err => {
+                    ToastAndroid.show("Unable to fetch previous appointment data.", ToastAndroid.LONG)
+                    console.log(err);
+                })
+
+        return () => {
+            unsbscribePrevious();
+            EventRegister.removeEventListener(logout);
+        }
+    }, [])
+
     useFocusEffect(
-        useCallback(()=>{
-        StatusBar.setBackgroundColor('#fff');
-    },[])
+        useCallback(() => {
+            StatusBar.setBackgroundColor('#fff');
+        }, [])
     )
 
     //methods
-    
-    const CardView = ({ item, index }) => {
 
+    const settelPriviousPendingAppointments = (list) => {
+        const filteredAppointments = list.filter(app => (app.status == 'pending'))
+        if (filteredAppointments.length > 0) {
+            const batchUpdate = firestore().batch();
+
+            filteredAppointments.forEach(app => {
+                batchUpdate.update(app.ref, {
+                    status: 'declined'
+                })
+            })
+
+            batchUpdate.commit().then(() => {
+                console.log("previous appointmnets setteled");
+            })
+                .catch(err => { console.log("unable to settel previous appointmnets ", err); });
+        }
+
+    }
+
+    const getUserData = (uid) => {
+        return firestore().collection('users').doc(uid).get()
+            .then(data => {
+                return data.data();
+            })
+            .catch(err => {
+                console.log(err);
+            })
+    }
+
+    const CardView = ({ item, index }) => {
+        let genderAge = item.userData.gender[0].toUpperCase() + "/" + moment().diff(new Date(item.userData.dob).toLocaleDateString(), 'years', false)
         var color;
         var time;
-        var appointmentDate = new Date(item.time);
+        var appointmentDate = new Date(item.time.toDate());
         const yesterday = new Date(Date.now() - 86400000);
         if (todayDate.getDate() === appointmentDate.getDate()) {
             var time = "Today " + moment(appointmentDate).format("hh:mm a");
@@ -115,16 +160,16 @@ function AppointmentsPrevious(props){
 
         return (
             <Animatable.View animation="slideInUp" style={{ marginBottom: 10 }} duration={500} delay={100} useNativeDriver={true}>
-                <Card style={styles.card} onPress={() => { }}>
+                <Card style={styles.card} onPress={() => { props.navigation.navigate('AppointmentDetailedView', { data: item }) }}>
                     <Card.Content style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
                         <View style={{ flexDirection: "row" }}>
                             <Fontisto name="user" size={30} style={{ margin: 5, marginRight: 10, alignSelf: "center" }} color="#147efb" />
-                            <Title style={{ paddingVertical: 0,alignSelf:"center", marginVertical: 0, flex: 1 }}>{item.name}</Title>
+                            <Title style={{ paddingVertical: 0, alignSelf: "center", marginVertical: 0, flex: 1 }}>{item.userData.name}</Title>
 
                         </View>
-                        <Caption style={{ marginVertical: 0, padding: 0 }}>{item.gender}</Caption>
+                        <Caption style={{ marginVertical: 0, padding: 0 }}>{genderAge}</Caption>
                         <View style={{ width: '60%' }}>
-                            <Paragraph numberOfLines={1} style={{ overflow: "hidden", }}>{item.issue}</Paragraph>
+                            <Paragraph numberOfLines={1} style={{ overflow: "hidden", }}>{item.problem}</Paragraph>
                         </View>
                         <Subheading style={styles.date}>{time}</Subheading>
                         <View style={styles.status}>
@@ -139,22 +184,41 @@ function AppointmentsPrevious(props){
         )
     }
 
-    return(
+    return (
         <View style={{ flex: 1, backgroundColor: "#fff", }}>
-            <StatusBar backgroundColor="#fff" barStyle="dark-content"/>
-            <Animated.FlatList
-                data={data}
-                renderItem={CardView}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={{ paddingHorizontal: 15, marginTop: 10, paddingBottom: 24 }}
-                onScroll={Animated.event([
-                    {
-                        nativeEvent: { contentOffset: { y: scrollY } }
-                    }
-                ], { useNativeDriver: true })}
-                scrollEventThrottle={16}
-                alwaysBounceVertical={false}
-            />
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+
+            {dataLoading ?
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Spinner
+                        type="Wave"
+                        color="#147efb"
+                        style={{ alignSelf: "center" }}
+                        isVisible={true}
+                        size={60}
+                    />
+                </View>
+                :
+                data.length == 0 ?
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ComunityIcon name='calendar-alert' size={80} color="#147efb" />
+                        <Subheading style={{}}>No New Appointments.</Subheading>
+                    </View>
+                    :
+                    <Animated.FlatList
+                        data={data}
+                        renderItem={CardView}
+                        keyExtractor={(item, index) => index.toString()}
+                        contentContainerStyle={{ paddingHorizontal: 15, marginTop: 10, paddingBottom: 24 }}
+                        onScroll={Animated.event([
+                            {
+                                nativeEvent: { contentOffset: { y: scrollY } }
+                            }
+                        ], { useNativeDriver: true })}
+                        scrollEventThrottle={16}
+                        alwaysBounceVertical={false}
+                    />
+            }
             <FAB
                 label="filters"
                 icon='filter-plus'
@@ -169,7 +233,7 @@ function AppointmentsPrevious(props){
     )
 }
 
-const styles=StyleSheet.create({
+const styles = StyleSheet.create({
     card: {
         elevation: 3,
         borderRadius: 10,
@@ -208,4 +272,4 @@ const styles=StyleSheet.create({
     },
 });
 
-export default connect(mapStateToProps,mapDispatchToProps)(AppointmentsPrevious);
+export default connect(mapStateToProps, mapDispatchToProps)(AppointmentsPrevious);

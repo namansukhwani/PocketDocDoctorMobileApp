@@ -61,32 +61,7 @@ export const addDoctorDetails = (uid, userData) => dispatch => {
                 reject(err);
             })
 
-        // fetch(URL+`/doctors/${uid}`,{
-        //     method:"POST",
-        //     headers:new Headers({
-        //         'Origin':'https://PocketDocOnly.com',
-        //         'Content-Type':'application/json'
-        //     }),
-        //     body:userData
-        // })
-        // .then(res=>res.json())
-        // .then(response=>{
-        //     if(!response.status){
-        //         console.log("redux userError");
-        //         dispatch(doctorError(response.message));
-        //         reject(response.message);
-        //     }
-        //     else{
-        //         console.log("redux userAdd");
-        //         dispatch(doctorAdd(response.data));
-        //         resolve();
-        //     }
-        // })
-        // .catch(err=>{
-        //     console.log(err);
-        //     dispatch(doctorError(err));
-        //     reject(err);
-        // })
+
     })
 }
 
@@ -121,33 +96,6 @@ export const updateDoctorDetails = (uid, updateData) => dispatch => {
                 dispatch(doctorError(err));
                 reject(err);
             })
-
-        // fetch(URL + `/doctors/${uid}`, {
-        //     method: "PUT",
-        //     headers: new Headers({
-        //         'Origin': 'https://PocketDocOnly.com',
-        //         'Content-Type': 'application/json'
-        //     }),
-        //     body: updateData
-        // })
-        //     .then(res => res.json())
-        //     .then(response => {
-        //         if (!response.status) {
-        //             console.log("redux userError");
-        //             dispatch(doctorError(response.message));
-        //             reject(response.message);
-        //         }
-        //         else {
-        //             console.log("redux userUpdated");
-        //             dispatch(doctorAdd(response.data));
-        //             resolve();
-        //         }
-        //     })
-        //     .catch(err => {
-        //         console.log(err);
-        //         dispatch(doctorError(err));
-        //         reject(err);
-        //     })
     })
 }
 
@@ -165,9 +113,9 @@ const doctorError = (err) => ({
     payload: err
 })
 
-export const addAppointments=(appoinmentsList)=>({
-    type:ActionTypes.ADD_APPOINTMENTS,
-    payload:appoinmentsList
+export const addAppointments = (appoinmentsList) => ({
+    type: ActionTypes.ADD_APPOINTMENTS,
+    payload: appoinmentsList
 })
 
 //Chats
