@@ -319,7 +319,7 @@ function AppointmentDetailedView(props) {
                                                 padding: 10,
                                                 borderRadius: 15,
                                                 marginVertical: 5,
-                                                backgroundColor: "#e3f2fd",
+                                                backgroundColor: getColors().lightColor,
                                                 justifyContent: "flex-start",
                                                 flexDirection: "row",
                                                 alignItems: "center"
@@ -345,7 +345,7 @@ function AppointmentDetailedView(props) {
                             style={{ backgroundColor: getColors().lightColor, elevation: 2, alignSelf: "center" }}
                             onPress={() => { props.navigation.navigate('PrescriptionNewView', { data: data }) }}
                             color={getColors().backgroundColor}
-                            disabled={data.status === "declined"}
+                            disabled={data.status === "declined" || data.status === "pending"}
                         />
                         <View style={{ justifyContent: "flex-start", alignItems: "flex-start", marginLeft: 10, alignSelf: "center" }}>
                             <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "flex-start" }}>
@@ -370,7 +370,7 @@ function AppointmentDetailedView(props) {
                                             padding: 10,
                                             borderRadius: 15,
                                             marginVertical: 5,
-                                            backgroundColor: "#e3f2fd",
+                                            backgroundColor: getColors().lightColor,
                                         }}
                                         onPress={() => { props.navigation.navigate('PrescriptionView', { data: data, pre: prescription }) }}
                                         onLongPress={() => {

@@ -43,6 +43,7 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.3",
     "react-native-modalize": "^2.0.6",
     "react-native-paper": "^4.2.0",
+    "react-native-ratings": "^8.0.4",
     "react-native-reanimated": "^1.13.0",
     "react-native-safe-area-context": "^3.1.8",
     "react-native-screens": "^2.11.0",

@@ -267,6 +267,13 @@ function Settings(props) {
                                     left={() => <List.Icon icon="medical-bag" color="#147efb" />}
                                 />
                                 <List.Item
+                                    onPress={() => { props.navigation.navigate("DocReviewsAll") }}
+                                    style={styles.listItem}
+                                    title="View Your Reviews"
+                                    right={() => <List.Icon icon="chevron-right-circle" color="#147efb" />}
+                                    left={() => <List.Icon icon="comment-text" color="#147efb" />}
+                                />
+                                <List.Item
                                     onPress={() => { props.navigation.navigate('ChangePassword') }}
                                     style={styles.listItem}
                                     title="Change Password"

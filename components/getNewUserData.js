@@ -52,7 +52,7 @@ function GetNewUserData(props) {
     const [email, setEmail] = useState(userAuthData.providerData[0].email);
     const [doctorRegistrationNo, setDoctorRegistrationNo] = useState('');
     const [phoneNo, setPhoneNo] = useState('');
-    const [gender, setGender] = useState('');
+    const [gender, setGender] = useState('male');
     const [dob, setDob] = useState(new Date());
     const [address, setAddress] = useState('');
     const [landmark, setLandmark] = useState('');
@@ -205,17 +205,17 @@ function GetNewUserData(props) {
             ToastAndroid.show("Number of slots can\'t be 0.", ToastAndroid.LONG);
             return
         }
-        else if(noOfPatients.trim()==="0" || noOfPatients.trim().length === 0 || !onlyNo.test(noOfPatients)){
+        else if (noOfPatients.trim() === "0" || noOfPatients.trim().length === 0 || !onlyNo.test(noOfPatients)) {
             seterror8(true)
             ToastAndroid.show("Please fill correct no of patients.", ToastAndroid.LONG);
             return
         }
-        else if(onlineFee.trim().length === 0||onlineFee.trim()=="0" || !onlyNo.test(onlineFee)){
+        else if (onlineFee.trim().length === 0 || onlineFee.trim() == "0" || !onlyNo.test(onlineFee)) {
             seterror9(true)
             ToastAndroid.show("Please fill correct online fee.", ToastAndroid.LONG);
             return
         }
-        else if(offlineFee.trim().length === 0||offlineFee.trim()=="0" || !onlyNo.test(offlineFee)){
+        else if (offlineFee.trim().length === 0 || offlineFee.trim() == "0" || !onlyNo.test(offlineFee)) {
             seterror10(true)
             ToastAndroid.show("Please fill correct offline fee.", ToastAndroid.LONG);
             return
@@ -451,11 +451,11 @@ function GetNewUserData(props) {
                                     setnoOfPatients(text);
                                 }}
                                 onBlur={() => {
-                                    if(noOfPatients==="0"){
+                                    if (noOfPatients === "0") {
                                         seterror8(true)
                                         ToastAndroid.show("No of patients can\'t be Zero", ToastAndroid.LONG);
                                     }
-                                    if(noOfPatients.length===0){
+                                    if (noOfPatients.length === 0) {
                                         seterror8(true)
                                         ToastAndroid.show("No of patients can\'t be empty", ToastAndroid.LONG);
                                     }
@@ -483,7 +483,7 @@ function GetNewUserData(props) {
                                     setonlineFee(text);
                                 }}
                                 onBlur={() => {
-                                    if(onlineFee=="0"){
+                                    if (onlineFee == "0") {
                                         seterror9(true)
                                         ToastAndroid.show("Online fee can\'t be Zero", ToastAndroid.LONG);
                                     }
@@ -515,7 +515,7 @@ function GetNewUserData(props) {
                                     setofflineFee(text);
                                 }}
                                 onBlur={() => {
-                                    if(offlineFee=="0"){
+                                    if (offlineFee == "0") {
                                         seterror10(true)
                                         ToastAndroid.show("Offline fee can\'t be Zero", ToastAndroid.LONG);
                                     }
@@ -760,33 +760,65 @@ function GetNewUserData(props) {
 
                     <Subheading style={{ marginTop: 10, fontWeight: 'bold' }}>Gender</Subheading>
 
-                    <View style={{ flexDirection: "row" }}>
-                        <RadioButton.Group value={gender} onValueChange={(value) => setGender(value)}>
-                            <View style={{ flexDirection: 'row' }}>
-                                <RadioButton.Item
-                                    label="Male"
-                                    value="male"
-                                    uncheckedColor="#000"
-                                    color="#147efb"
-                                    style={styles.radio}
-                                />
-                                <RadioButton.Item
-                                    label="Female"
-                                    value="female"
-                                    uncheckedColor="#000"
-                                    color="#147efb"
-                                    style={styles.radio}
-                                />
-                                <RadioButton.Item
-                                    label="Others"
-                                    value="others"
-                                    uncheckedColor="#000"
-                                    color="#147efb"
-                                    style={styles.radio}
-                                />
-                            </View>
-                        </RadioButton.Group>
+                    <View style={{ flexDirection: 'row', alignItems: "center" }}>
+                        <TouchableOpacity style={styles.radio} onPress={() => setGender('male')}>
+                            <Text style={{ fontSize: 17, color: gender === "male" ? "#147efb" : "#000" }}>Male</Text>
+                            <RadioButton.IOS
+                                value="male"
+                                status={gender === "male" ? "checked" : "unchecked"}
+                                color="#147efb"
+                                onPress={() => setGender('male')}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.radio} onPress={() => setGender('female')}>
+                            <Text style={{ fontSize: 17, color: gender === "female" ? "#147efb" : "#000" }}>Female</Text>
+                            <RadioButton.IOS
+                                value="female"
+                                status={gender === "female" ? "checked" : "unchecked"}
+                                color="#147efb"
+                                onPress={() => setGender('female')}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.radio} onPress={() => setGender('others')}>
+                            <Text style={{ fontSize: 17, color: gender === "others" ? "#147efb" : "#000" }}>Others</Text>
+                            <RadioButton.IOS
+                                value="others"
+                                status={gender === "others" ? "checked" : "unchecked"}
+                                color="#147efb"
+                                onPress={() => setGender('others')}
+                            />
+                        </TouchableOpacity>
                     </View>
+
+                    {/* <RadioButton.Group value={gender} onValueChange={(value) => setGender(value)}>
+                        <RadioButton.Item
+                            label="Male"
+                            value="male"
+                            uncheckedColor="#000"
+                            color="#147efb"
+                            style={styles.radio}
+                            mode="ios"
+                            labelStyle={{ color: gender === "male" ? "#147efb" : "#000" }}
+                        />
+                        <RadioButton.Item
+                            label="Female"
+                            value="female"
+                            uncheckedColor="#000"
+                            color="#147efb"
+                            style={styles.radio}
+                            mode="ios"
+                            labelStyle={{ color: gender === "female" ? "#147efb" : "#000" }}
+                        />
+                        <RadioButton.Item
+                            label="Others"
+                            value="others"
+                            uncheckedColor="#000"
+                            color="#147efb"
+                            style={styles.radio}
+                            mode="ios"
+                            labelStyle={{ color: gender === "others" ? "#147efb" : "#000" }}
+                        />
+                    </RadioButton.Group> */}
 
                     <Subheading style={{ marginTop: 10, fontWeight: 'bold' }}>DOB*</Subheading>
                     <Button mode='outlined' style={{ justifyContent: 'center' }} color="#000" onPress={() => { setShowDatePicker(true) }}>{moment(dob).format('Do MMMM YYYY')}</Button>
@@ -926,9 +958,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#f2f2f2',
         borderRadius: 10,
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: "space-between",
         alignItems: 'center',
-        elevation: 1
+        elevation: 1,
+        padding: 5,
+        paddingHorizontal: 10,
+        flexDirection: "row"
     },
     button: {
         position: 'absolute',

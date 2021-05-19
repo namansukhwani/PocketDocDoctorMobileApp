@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 import { connect } from 'react-redux';
 import { Utility } from '../utility/utility';
 import { } from '../redux/ActionCreators';
-import { useFocusEffect,useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { HomeHeader } from '../utility/ViewUtility';
 import * as Animatable from 'react-native-animatable';
 import moment from 'moment';
@@ -17,6 +17,7 @@ import Spinner from 'react-native-spinkit';
 import firestore from '@react-native-firebase/firestore';
 import { addAppointments } from '../redux/ActionCreators';
 import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Rating } from 'react-native-ratings';
 
 //redux
 const mapStateToProps = state => {
@@ -45,14 +46,17 @@ function Home(props) {
     const [appointmentsTodayData, setappointmentsTodayData] = useState([])
     // const [lengthNewAppointments, setlengthNewAppointments] = useState(0)
     // const [isScreenFocused, setisScreenFocused] = useState(true)
+    const [reviewsData, setreviewsData] = useState([]);
+    const [reviewsLoading, setreviewsLoading] = useState(true);
 
     //lifecycle
     useEffect(() => {
         setUpCallListeners();
 
-        const logout=EventRegister.addEventListener('logout',()=>{
+        const logout = EventRegister.addEventListener('logout', () => {
             unsbscribeNewAppintments();
             unsbscribeSheduledAppointments();
+            unsbscribeReviews();
         })
 
         // const blurEvent=navigaition.addListener('blur',()=>{
@@ -60,8 +64,8 @@ function Home(props) {
         //     console.log("blur event");
         //     console.log(isScreenFocused);
         // })
-        const dayStart=new Date()
-        dayStart.setHours(0,0,0,0)
+        const dayStart = new Date()
+        dayStart.setHours(0, 0, 0, 0)
 
         const dayEnd = new Date()
         dayEnd.setHours(23, 59, 59, 999)
@@ -134,10 +138,29 @@ function Home(props) {
                     })
             })
 
+        const unsbscribeReviews = firestore().collection('doctors').doc(auth().currentUser.uid).collection('reviews')
+            .orderBy('dateCreated', 'desc')
+            .limit(7)
+            .onSnapshot((querySnapshot) => {
+                return Promise.all(querySnapshot.docs.map(async appointment => {
+                    return {
+                        id: appointment.id,
+                        userData: await getUserData(appointment.data().userId),
+                        ...appointment.data()
+                    }
+                }))
+                    .then(list => {
+                        setreviewsData(list);
+                        if (reviewsLoading) {
+                            setreviewsLoading(false);
+                        }
+                    })
+            })
         return () => {
             EventRegister.removeEventListener(logout);
             unsbscribeNewAppintments();
             unsbscribeSheduledAppointments();
+            unsbscribeReviews();
         }
     }, []);
 
@@ -390,6 +413,33 @@ function Home(props) {
         )
     }
 
+    function Review({ data, index, totalLength }) {
+
+        return (
+            <View style={[styles.review, index === totalLength - 1 || index === 5 ? { borderBottomWidth: 0 } : { borderBottomWidth: 0.4 }]} key={index.toString()}>
+                <View style={styles.reviewSendersName}>
+                    {data.userData.profilePictureUrl === '' ?
+                        <Avatar.Image size={20} source={require('../assets/user_avatar.png')} />
+                        :
+                        <Avatar.Image size={20} source={{ uri: data.userData.profilePictureUrl }} />
+                    }
+                    <Caption style={{ marginLeft: 4 }}>{data.userData.name}</Caption>
+                </View>
+                <Paragraph numberOfLines={7}>{data.comment}</Paragraph>
+                <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: 'center' }}>
+                    <Rating
+                        type="star"
+                        readonly={true}
+                        imageSize={14}
+                        startingValue={data.rating}
+                        tintColor="#eeeeee"
+                    />
+                    <Caption style={{ fontSize: 12 }}>{moment(data.dateCreated.toDate()).format('DD/MM/YYYY')}</Caption>
+                </View>
+            </View>
+        )
+    }
+
     return (
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
             <StatusBar backgroundColor="#fff" barStyle='dark-content' />
@@ -452,6 +502,33 @@ function Home(props) {
                                     showsVerticalScrollIndicator={false}
                                     nestedScrollEnabled={true}
                                 />}
+                        <Subheading style={{ fontWeight: 'bold', paddingHorizontal: 15 }}>Reviews</Subheading>
+                        <View style={{ padding: 15, paddingTop: 5 }}>
+                            {reviewsLoading ?
+                                <View style={{ marginVertical: '6%', justifyContent: 'center' }}>
+                                    <Spinner
+                                        type="Wave"
+                                        color="#147efb"
+                                        style={{ alignSelf: "center" }}
+                                        isVisible={true}
+                                        size={60}
+                                    />
+                                </View>
+                                :
+                                <View style={styles.reviewsDiv}>
+                                    {reviewsData.map((review, index) => {
+                                        if (index === 6) {
+                                            return null;
+                                        }
+                                        return <Review data={review} index={index} key={index.toString()} totalLength={reviewsData.length} />
+                                    })}
+                                    {reviewsData.length > 6 &&
+                                        <TouchableOpacity style={styles.showMoreButton} onPress={() => { props.navigation.navigate('DocReviewsAll') }}><Paragraph style={{ color: '#147efb', fontWeight: "bold" }} >Show More</Paragraph></TouchableOpacity>
+                                    }
+                                </View>
+
+                            }
+                        </View>
                     </Animatable.View>
                 </Animatable.View>
             </ScrollView>
@@ -524,7 +601,39 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: 'center',
         elevation: 2
-    }
+    },
+    reviewsDiv: {
+        backgroundColor: "#eeeeee",
+        borderRadius: 15,
+        marginTop: 5,
+        overflow: 'hidden'
+    },
+    showMoreButton: {
+        position: 'relative',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 40,
+        backgroundColor: "#e0e0e0"
+    },
+    review: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderColor: "#989898"
+    },
+    reviewSendersName: {
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "row",
+        backgroundColor: "#fff",
+        alignSelf: 'flex-start',
+        borderRadius: 15
+    },
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Home);

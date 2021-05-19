@@ -32,6 +32,7 @@ import ChangeEmail from './ChangeEmail';
 import EditProfesionalProfile from './EditProfesionalProfile';
 import PrescriptionNewView from './PrescriptionNewAdd';
 import PrescriptionView from './PrescriptionView';
+import DocReviewsAll from './DocReviewsAll';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -382,6 +383,25 @@ export default function Main() {
                         ),
                     })}
                     component={PrescriptionView}
+                />
+                <Stack.Screen
+                    name="DocReviewsAll"
+                    options={({ route, navigation }) => ({
+                        //headerShown:false,
+                        headerTitle: 'Reviews',
+                        headerTitleAlign: 'center',
+                        headerStyle: {
+                            elevation: 0,
+                            height: 40,
+                            backgroundColor: '#fff'
+                        },
+                        headerLeft: () => (
+                            <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }} onPress={() => navigation.goBack()}>
+                                <Icon name="chevron-back" size={30} onPress={() => navigation.goBack()} />
+                            </TouchableOpacity>
+                        ),
+                    })}
+                    component={DocReviewsAll}
                 />
             </Stack.Navigator>
         </NavigationContainer>
