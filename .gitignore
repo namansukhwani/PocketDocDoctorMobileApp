@@ -1,5 +1,7 @@
 android/java_pid10836.hprof
 android/app/src/main/assets
+android/app/google-services.json
+config.js
 # OSX
 #
 .DS_Store
